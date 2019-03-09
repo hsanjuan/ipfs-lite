@@ -18,7 +18,7 @@ Some helper functions are provided to
 It provides:
 
 * An [`ipld.DAGService`](https://godoc.org/github.com/ipfs/go-ipld-format#DAGService)
-* An [`Import` method](https://godoc.org/github.com/hsanjuan/ipfs-lite#Peer.Import) to add content from a reader.
+* An [`Import` method](https://godoc.org/github.com/hsanjuan/ipfs-lite#Peer.Import) to add content from a reader
 
 The goal of IPFS-Lite is to run the **bare minimal** functionality for any
 IPLD-based application to interact with the IPFS Network by getting and
