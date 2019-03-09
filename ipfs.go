@@ -48,7 +48,8 @@ type Config struct {
 // blocks from/to the IPFS network.
 type Peer struct {
 	ipld.DAGService
-	cfg *Config
+	bstore blockstore.Blockstore
+	cfg    *Config
 }
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
@@ -81,6 +82,7 @@ func New(
 	return &Peer{
 		DAGService: dags,
 		cfg:        cfg,
+		bstore:     cachedbs,
 	}, nil
 }
 
@@ -126,4 +128,9 @@ func (p *Peer) Import(ctx context.Context, r io.Reader, params *AddParams) (ipld
 	default:
 		return nil, errors.New("invalid Layout")
 	}
+}
+
+// Blockstore offers access to the blockstore underlying the Peer's DAGService.
+func (p *Peer) BlockStore() blockstore.Blockstore {
+	return p.bstore
 }
