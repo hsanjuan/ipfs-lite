@@ -7,7 +7,8 @@ IPFS-lite is an embeddable, super-lightweight IPFS peer which runs the minimal
 setup to provide an `ipld.DAGService`. It can:
 
 * Add, Get, Remove IPLD Nodes to/from the IPFS Network (remove is a local blockstore operation).
-* Import content (chunk, build the DAG and Add) from a `io.Reader`.
+* Add single files (chunk, build the DAG and Add) from a `io.Reader`.
+* Get single files given a their CID.
 
 It needs:
 
