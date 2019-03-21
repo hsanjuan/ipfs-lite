@@ -1,0 +1,30 @@
+os:
+  - linux
+
+language: go
+
+go:
+  - 1.11.x
+
+env:
+  global:
+    - GOTFLAGS="-race"
+  matrix:
+    - BUILD_DEPTYPE=gomod
+
+env:
+  - GO111MODULE=on
+
+install:
+  - true
+
+script:
+  - go test -v -race
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+cache:
+  directories:
+    - $GOPATH/src/gx
+    - $GOPATH/pkg/mod
+    - $HOME/.cache/go-build

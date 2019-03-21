@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/ipfs/go-cid"
@@ -45,10 +46,16 @@ func main() {
 		panic(err)
 	}
 
-	c, _ := cid.Decode("QmVBw81ZCSdddvoVuT3G3jNpNr7eG27UVfVpvgZ72jKreN")
-	n, err := lite.Get(ctx, c)
+	c, _ := cid.Decode("QmQzd3DhkmdfJtC65JLp9bt1bSHh5GXZvrFHPanZdRTPX3")
+	rsc, err := lite.GetFile(ctx, c)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(n.RawData()))
+	defer rsc.Close()
+	content, err := ioutil.ReadAll(rsc)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(content))
 }

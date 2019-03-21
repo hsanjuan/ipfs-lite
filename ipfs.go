@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/ipfs/go-bitswap"
 	"github.com/ipfs/go-bitswap/network"
@@ -26,8 +27,10 @@ import (
 	"github.com/ipfs/go-unixfs/importer/balanced"
 	"github.com/ipfs/go-unixfs/importer/helpers"
 	"github.com/ipfs/go-unixfs/importer/trickle"
+	ufsio "github.com/ipfs/go-unixfs/io"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	multihash "github.com/multiformats/go-multihash"
 )
 
 func init() {
@@ -54,14 +57,20 @@ type Peer struct {
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
 // DHT. The Host and the DHT may be nil if config.Offline is set to true, as
-// they are not used in that case.
+// they are not used in that case. Peer implements the ipld.DAGService
+// interface.
 func New(
 	ctx context.Context,
 	store datastore.Batching,
 	host host.Host,
 	dht *dht.IpfsDHT,
 	cfg *Config,
-) (ipld.DAGService, error) {
+) (*Peer, error) {
+
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
 	bs := blockstore.NewBlockstore(store)
 	bs = blockstore.NewIdStore(bs)
 	cachedbs, err := blockstore.CachedBlockstore(ctx, bs, blockstore.DefaultCacheOpts())
@@ -97,14 +106,28 @@ type AddParams struct {
 	HashFun   string
 }
 
-// Import chunks and adds content to the DAGService from a reader. The content
+// AddFile chunks and adds content to the DAGService from a reader. The content
 // is stored as a UnixFS DAG (default for IPFS). It returns the root
 // ipld.Node.
-func (p *Peer) Import(ctx context.Context, r io.Reader, params *AddParams) (ipld.Node, error) {
+func (p *Peer) AddFile(ctx context.Context, r io.Reader, params *AddParams) (ipld.Node, error) {
+	if params == nil {
+		params = &AddParams{}
+	}
+	if params.HashFun == "" {
+		params.HashFun = "sha2-256"
+	}
+
 	prefix, err := merkledag.PrefixForCidVersion(1)
 	if err != nil {
 		return nil, fmt.Errorf("bad CID Version: %s", err)
 	}
+
+	hashFunCode, ok := multihash.Names[strings.ToLower(params.HashFun)]
+	if !ok {
+		return nil, fmt.Errorf("unrecognized hash function: %s", params.HashFun)
+	}
+	prefix.MhType = hashFunCode
+	prefix.MhLength = -1
 
 	dbp := helpers.DagBuilderParams{
 		Dagserv:    p,
@@ -128,6 +151,16 @@ func (p *Peer) Import(ctx context.Context, r io.Reader, params *AddParams) (ipld
 	default:
 		return nil, errors.New("invalid Layout")
 	}
+}
+
+// GetFile returns a reader to a file as identified by its root CID. The file
+// must have been added as a UnixFS DAG (default for IPFS).
+func (p *Peer) GetFile(ctx context.Context, c cid.Cid) (ufsio.ReadSeekCloser, error) {
+	n, err := p.Get(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+	return ufsio.NewDagReader(ctx, n, p)
 }
 
 // Blockstore offers access to the blockstore underlying the Peer's DAGService.

@@ -1,5 +1,8 @@
 # IPFS-Lite
 
+[![Build Status](https://travis-ci.org/hsanjuan/ipfs-lite.svg?branch=master)](https://travis-ci.org/hsanjuan/ipfs-lite)
+[![Godoc](https://godoc.org/github.com/hsanjuan/ipfs-lite?status.svg)](http://godoc.org/github.com/hsanjuan/ipfs-lite)
+
 IPFS-lite is an embeddable, super-lightweight IPFS peer which runs the minimal
 setup to provide an `ipld.DAGService`. It can:
 
@@ -18,7 +21,8 @@ Some helper functions are provided to
 It provides:
 
 * An [`ipld.DAGService`](https://godoc.org/github.com/ipfs/go-ipld-format#DAGService)
-* An [`Import` method](https://godoc.org/github.com/hsanjuan/ipfs-lite#Peer.Import) to add content from a reader
+* An [`AddFile` method](https://godoc.org/github.com/hsanjuan/ipfs-lite#Peer.AddFile) to add content from a reader
+* A [`GetFile` method](https://godoc.org/github.com/hsanjuan/ipfs-lite#Peer.GetFile) to get a file from IPFS.
 
 The goal of IPFS-Lite is to run the **bare minimal** functionality for any
 IPLD-based application to interact with the IPFS Network by getting and
@@ -29,4 +33,3 @@ Host and DHT for other things.
 ## License
 
 Apache 2.0
-
