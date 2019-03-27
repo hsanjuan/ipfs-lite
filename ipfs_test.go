@@ -151,6 +151,34 @@ func TestDAG(t *testing.T) {
 	}
 }
 
+func TestSession(t *testing.T) {
+	ctx := context.Background()
+	p1, p2, closer := setupPeers(t)
+	defer closer(t)
+
+	m := map[string]string{
+		"akey": "avalue",
+	}
+
+	codec := uint64(multihash.SHA2_256)
+	node, err := cbor.WrapObject(m, codec, multihash.DefaultLengths[codec])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("created node: ", node.Cid())
+	err = p1.Add(ctx, node)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sesGetter := p2.Session(ctx)
+	_, err = sesGetter.Get(ctx, node.Cid())
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestFiles(t *testing.T) {
 	p1, p2, closer := setupPeers(t)
 	defer closer(t)

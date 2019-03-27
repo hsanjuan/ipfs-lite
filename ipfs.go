@@ -1,7 +1,5 @@
-// Package ipfslite is a super-lightweight IPFS peer which runs the minimal
-// setup to provide an `ipld.DAGService`. It can only do basic DAG
-// functionality like retrieving and putting blocks from/to the IPFS
-// network.
+// Package ipfslite is a lightweight IPFS peer which runs the minimal setup to
+// provide an `ipld.DAGService`, "Add" and "Get" UnixFS files from IPFS.
 package ipfslite
 
 import (
@@ -95,6 +93,15 @@ func New(
 	}, nil
 }
 
+// Session returns a session-based NodeGetter.
+func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
+	ng := merkledag.NewSession(ctx, p.DAGService)
+	if ng == p.DAGService {
+		logger.Warning("DAGService does not support sessions")
+	}
+	return ng
+}
+
 // AddParams contains all of the configurable parameters needed to specify the
 // importing process of a file.
 type AddParams struct {
@@ -103,6 +110,7 @@ type AddParams struct {
 	RawLeaves bool
 	Hidden    bool
 	Shard     bool
+	NoCopy    bool
 	HashFun   string
 }
 
@@ -133,7 +141,7 @@ func (p *Peer) AddFile(ctx context.Context, r io.Reader, params *AddParams) (ipl
 		Dagserv:    p,
 		RawLeaves:  params.RawLeaves,
 		Maxlinks:   helpers.DefaultLinksPerBlock,
-		NoCopy:     false,
+		NoCopy:     params.NoCopy,
 		CidBuilder: &prefix,
 	}
 
