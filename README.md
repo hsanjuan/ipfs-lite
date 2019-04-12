@@ -28,7 +28,7 @@ It provides:
 The goal of IPFS-Lite is to run the **bare minimal** functionality for any
 IPLD-based application to interact with the IPFS Network by getting and
 putting blocks to it, rather than having to deal with the complexities of
-using a full IPFS daemon and with the liberty of sharing the needed libp2p
+using a full IPFS daemon, and with the liberty of sharing the needed libp2p
 Host and DHT for other things.
 
 ## License
