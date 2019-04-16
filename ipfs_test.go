@@ -19,7 +19,7 @@ import (
 	multihash "github.com/multiformats/go-multihash"
 )
 
-var secret []byte = []byte("2cc2c79ea52c9cc85dfd3061961dd8c4230cce0b09f182a0822c1536bf1d5f21")
+var secret = []byte("2cc2c79ea52c9cc85dfd3061961dd8c4230cce0b09f182a0822c1536bf1d5f21")
 
 func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 	ctx := context.Background()

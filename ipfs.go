@@ -171,7 +171,13 @@ func (p *Peer) GetFile(ctx context.Context, c cid.Cid) (ufsio.ReadSeekCloser, er
 	return ufsio.NewDagReader(ctx, n, p)
 }
 
-// Blockstore offers access to the blockstore underlying the Peer's DAGService.
+// BlockStore offers access to the blockstore underlying the Peer's DAGService.
 func (p *Peer) BlockStore() blockstore.Blockstore {
 	return p.bstore
+}
+
+// HasBlock returns whether a given block is available locally. It is
+// a shorthand for .Blockstore().Has().
+func (p *Peer) HasBlock(c cid.Cid) (bool, error) {
+	return p.BlockStore().Has(c)
 }
