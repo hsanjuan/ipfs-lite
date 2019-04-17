@@ -1,9 +1,13 @@
 # IPFS-Lite
 
+<p align="center">
+<img src="logo.png" alt="ipfs-lite" title="ipfs-lite" />
+</p>
+
 [![Build Status](https://travis-ci.org/hsanjuan/ipfs-lite.svg?branch=master)](https://travis-ci.org/hsanjuan/ipfs-lite)
 [![Godoc](https://godoc.org/github.com/hsanjuan/ipfs-lite?status.svg)](http://godoc.org/github.com/hsanjuan/ipfs-lite)
 
-IPFS-lite is an embeddable, lightweight IPFS peer which runs the minimal setup
+IPFS-Lite is an embeddable, lightweight IPFS peer which runs the minimal setup
 to provide an `ipld.DAGService`. It can:
 
 * Add, Get, Remove IPLD Nodes to/from the IPFS Network (remove is a local blockstore operation).
