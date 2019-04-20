@@ -10,11 +10,8 @@ import (
 	datastore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	cbor "github.com/ipfs/go-ipld-cbor"
-	libp2p "github.com/libp2p/go-libp2p"
 	crypto "github.com/libp2p/go-libp2p-crypto"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
-	pnet "github.com/libp2p/go-libp2p-pnet"
 	multiaddr "github.com/multiformats/go-multiaddr"
 	multihash "github.com/multiformats/go-multihash"
 )
@@ -23,31 +20,6 @@ var secret = []byte("2cc2c79ea52c9cc85dfd3061961dd8c4230cce0b09f182a0822c1536bf1
 
 func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 	ctx := context.Background()
-
-	// Workaround https://github.com/libp2p/go-libp2p-kad-dht/issues/308
-	var key [32]byte
-	copy(key[:], secret)
-	prot, err := pnet.NewV1ProtectorFromBytes(&key)
-	if err != nil {
-		t.Fatal(err)
-	}
-	signalHost, err := libp2p.New(
-		ctx,
-		libp2p.PrivateNetwork(prot),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sdht, err := dht.New(ctx, signalHost)
-	if err != nil {
-		signalHost.Close()
-		t.Fatal(err)
-	}
-
-	pinfo := peerstore.PeerInfo{
-		ID:    signalHost.ID(),
-		Addrs: signalHost.Addrs(),
-	}
 
 	ds1 := dssync.MutexWrap(datastore.NewMapDatastore())
 	ds2 := dssync.MutexWrap(datastore.NewMapDatastore())
@@ -66,27 +38,33 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 		priv1,
 		secret,
 		[]multiaddr.Multiaddr{listen},
-		[]peerstore.PeerInfo{pinfo},
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	pinfo1 := peerstore.PeerInfo{
+		ID:    h1.ID(),
+		Addrs: h1.Addrs(),
+	}
+
 	h2, dht2, err := SetupLibp2p(
 		ctx,
 		priv2,
 		secret,
 		[]multiaddr.Multiaddr{listen},
-		[]peerstore.PeerInfo{pinfo},
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	dht1.Update(ctx, h2.ID())
-	dht2.Update(ctx, h1.ID())
+	pinfo2 := peerstore.PeerInfo{
+		ID:    h2.ID(),
+		Addrs: h2.Addrs(),
+	}
 
 	closer = func(t *testing.T) {
-		for _, cl := range []io.Closer{sdht, signalHost, dht1, dht2, h1, h2} {
+		for _, cl := range []io.Closer{dht1, dht2, h1, h2} {
 			err := cl.Close()
 			if err != nil {
 				t.Error(err)
@@ -103,6 +81,10 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 		closer(t)
 		t.Fatal(err)
 	}
+
+	p1.Bootstrap([]peerstore.PeerInfo{pinfo2})
+	p2.Bootstrap([]peerstore.PeerInfo{pinfo1})
+
 	return
 }
 

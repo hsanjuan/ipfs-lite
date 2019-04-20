@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/user"
-	"sync"
 
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
@@ -63,19 +62,23 @@ func IPFSBadgerDatastore() (datastore.Batching, error) {
 	if err != nil {
 		return nil, err
 	}
+	return BadgerDatastore(path)
+}
+
+// BadgerDatastore returns a new instance of Badger-DS persisting
+// to the given path with the default options.
+func BadgerDatastore(path string) (datastore.Batching, error) {
 	return badger.NewDatastore(path, &badger.DefaultOptions)
 }
 
 // SetupLibp2p returns a routed host and DHT instances that can be used to
-// easily create a ipfslite Peer. The host will attempt to connecto to
-// bootstrappers and the DHT will be bootstrapped from those connections and
-// should be ready to use after returning.
+// easily create a ipfslite Peer. The DHT is NOT bootstrapped. You may consider
+// to use Peer.Bootstrap() after creating the IPFS-Lite Peer.
 func SetupLibp2p(
 	ctx context.Context,
 	hostKey crypto.PrivKey,
 	secret []byte,
 	listenAddrs []multiaddr.Multiaddr,
-	bootstrapAddrs []peerstore.PeerInfo,
 ) (host.Host, *dht.IpfsDHT, error) {
 
 	var prot ipnet.Protector
@@ -103,46 +106,6 @@ func SetupLibp2p(
 	}
 
 	idht, err := dht.New(ctx, h)
-	if err != nil {
-		h.Close()
-		return nil, nil, err
-	}
-
-	connected := make(chan struct{}) // five is threshold
-
-	var wg sync.WaitGroup
-	for _, pinfo := range bootstrapAddrs {
-		//h.Peerstore().AddAddrs(pinfo.ID, pinfo.Addrs, peerstore.PermanentAddrTTL)
-		wg.Add(1)
-		go func(pinfo peerstore.PeerInfo) {
-			defer wg.Done()
-			err := h.Connect(ctx, pinfo)
-			if err != nil {
-				logger.Error(err)
-				return
-			}
-			logger.Info("Connected to", pinfo.ID)
-			connected <- struct{}{}
-		}(pinfo)
-	}
-
-	go func() {
-		wg.Wait()
-		close(connected)
-	}()
-
-	i := 0
-	for range connected {
-		i++
-	}
-	if i < len(bootstrapAddrs)/2 {
-		logger.Warning(
-			"only connected to %d bootstrap peers out of %d",
-			i,
-			len(bootstrapAddrs))
-	}
-
-	err = idht.Bootstrap(ctx)
 	if err != nil {
 		h.Close()
 		return nil, nil, err

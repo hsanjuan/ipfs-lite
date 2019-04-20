@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/ipfs/go-bitswap"
 	"github.com/ipfs/go-bitswap/network"
@@ -28,6 +29,7 @@ import (
 	ufsio "github.com/ipfs/go-unixfs/io"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	multihash "github.com/multiformats/go-multihash"
 )
 
@@ -48,9 +50,14 @@ type Config struct {
 // Peer is an IPFS-Lite peer. It provides a DAG service that can fetch and put
 // blocks from/to the IPFS network.
 type Peer struct {
+	ctx context.Context
+
+	cfg *Config
+
 	ipld.DAGService
 	bstore blockstore.Blockstore
-	cfg    *Config
+	host   host.Host
+	dht    *dht.IpfsDHT
 }
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
@@ -87,10 +94,57 @@ func New(
 
 	dags := merkledag.NewDAGService(bserv)
 	return &Peer{
+		ctx:        ctx,
 		DAGService: dags,
 		cfg:        cfg,
 		bstore:     cachedbs,
+		host:       host,
+		dht:        dht,
 	}, nil
+}
+
+// Bootstrap is an optional helper to connect to the given peers and bootstrap
+// the Peer DHT (and Bitswap). This is a best-effort function. Errors are only
+// logged and a warning is printed when less than half of the given peers
+// could be contacted. It is fine to pass a list where some peers will not be
+// reachable.
+func (p *Peer) Bootstrap(peers []peerstore.PeerInfo) {
+	connected := make(chan struct{})
+
+	var wg sync.WaitGroup
+	for _, pinfo := range peers {
+		//h.Peerstore().AddAddrs(pinfo.ID, pinfo.Addrs, peerstore.PermanentAddrTTL)
+		wg.Add(1)
+		go func(pinfo peerstore.PeerInfo) {
+			defer wg.Done()
+			err := p.host.Connect(p.ctx, pinfo)
+			if err != nil {
+				logger.Error(err)
+				return
+			}
+			logger.Info("Connected to", pinfo.ID)
+			connected <- struct{}{}
+		}(pinfo)
+	}
+
+	go func() {
+		wg.Wait()
+		close(connected)
+	}()
+
+	i := 0
+	for range connected {
+		i++
+	}
+	if nPeers := len(peers); i < nPeers/2 {
+		logger.Warning("only connected to %d bootstrap peers out of %d", i, nPeers)
+	}
+
+	err := p.dht.Bootstrap(p.ctx)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
 }
 
 // Session returns a session-based NodeGetter.

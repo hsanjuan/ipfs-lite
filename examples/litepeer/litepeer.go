@@ -1,5 +1,8 @@
 package main
 
+// This example launches an IPFS-Lite peer and fetches a hello-world
+// hash from the IPFS network.
+
 import (
 	"context"
 	"fmt"
@@ -18,7 +21,7 @@ func main() {
 
 	log.SetLogLevel("*", "warn")
 
-	ds, err := ipfslite.IPFSBadgerDatastore()
+	ds, err := ipfslite.BadgerDatastore("test")
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +37,6 @@ func main() {
 		priv,
 		nil,
 		[]multiaddr.Multiaddr{listen},
-		ipfslite.DefaultBootstrapPeers(),
 	)
 
 	if err != nil {
@@ -46,7 +48,9 @@ func main() {
 		panic(err)
 	}
 
-	c, _ := cid.Decode("QmQzd3DhkmdfJtC65JLp9bt1bSHh5GXZvrFHPanZdRTPX3")
+	lite.Bootstrap(ipfslite.DefaultBootstrapPeers())
+
+	c, _ := cid.Decode("QmWATWQ7fVPP2EFGu71UkfnqhYXDYH566qy47CnJDgvs8u")
 	rsc, err := lite.GetFile(ctx, c)
 	if err != nil {
 		panic(err)
