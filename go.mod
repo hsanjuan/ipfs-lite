@@ -1,6 +1,7 @@
 module github.com/hsanjuan/ipfs-lite
 
 require (
+	github.com/awalterschulze/gographviz v0.0.0-20190221210632-1e9ccb565bca
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/ipfs/go-bitswap v0.0.3
