@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	//"io/ioutil"
 
+	"github.com/awalterschulze/gographviz"
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/ipfs/go-cid"
 	format "github.com/ipfs/go-ipld-format"
@@ -20,7 +20,9 @@ var (
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	log.SetLogLevel("*", "warn")
+
 	ds, err := ipfslite.BadgerDatastore("test")
 	if err != nil {
 		panic(err)
@@ -31,6 +33,7 @@ func main() {
 	}
 
 	listen, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/4005")
+
 	h, dht, err := ipfslite.SetupLibp2p(
 		ctx,
 		priv,
@@ -48,11 +51,46 @@ func main() {
 	}
 
 	lite.Bootstrap(ipfslite.DefaultBootstrapPeers())
+
 	c, _ := cid.Decode(testCID)
 	node, err := lite.Get(ctx, c)
 	if err != nil {
 		panic(err)
 	}
+	graphAst, err := gographviz.ParseString(`digraph G {}`)
+	if err != nil {
+		panic(err)
+	}
+	graph := gographviz.NewGraph()
+	if err := gographviz.Analyse(graphAst, graph); err != nil {
+		panic(err)
+	}
 	navNode := format.NewNavigableIPLDNode(node, lite.DAGService)
-	fmt.Printf("%+v\n", navNode)
+	fmt.Printf("%v links\n", navNode.ChildTotal())
+
+	rootNode := node.Cid().String()
+
+	// add the root node to the graph
+	if err := graph.AddNode("Example", rootNode, nil); err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < int(navNode.ChildTotal()); i++ {
+		childNode, err := navNode.FetchChild(ctx, uint(i))
+		if err != nil {
+			panic(err)
+		}
+		n := format.ExtractIPLDNode(childNode)
+		childCID := n.Cid().String()
+		fmt.Printf("processing link %v, cid %s\n", i, n.Cid())
+
+		if err := graph.AddNode("Example", childCID, nil); err != nil {
+			panic(err)
+		}
+		if err := graph.AddEdge(rootNode, childCID, true, nil); err != nil {
+			panic(err)
+		}
+	}
+	graphOut := graph.String()
+	fmt.Println(graphOut)
 }
