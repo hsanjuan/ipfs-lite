@@ -66,7 +66,6 @@ func main() {
 		panic(err)
 	}
 	navNode := format.NewNavigableIPLDNode(node, lite.DAGService)
-	fmt.Printf("%v links\n", navNode.ChildTotal())
 
 	rootNode := node.Cid().String()
 
@@ -82,7 +81,6 @@ func main() {
 		}
 		n := format.ExtractIPLDNode(childNode)
 		childCID := n.Cid().String()
-		fmt.Printf("processing link %v, cid %s\n", i, n.Cid())
 
 		if err := graph.AddNode("Example", childCID, nil); err != nil {
 			panic(err)
