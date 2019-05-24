@@ -19,7 +19,7 @@ import (
 var secret = []byte("2cc2c79ea52c9cc85dfd3061961dd8c4230cce0b09f182a0822c1536bf1d5f21")
 
 func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	ds1 := dssync.MutexWrap(datastore.NewMapDatastore())
 	ds2 := dssync.MutexWrap(datastore.NewMapDatastore())
@@ -64,6 +64,7 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 	}
 
 	closer = func(t *testing.T) {
+		cancel()
 		for _, cl := range []io.Closer{dht1, dht2, h1, h2} {
 			err := cl.Close()
 			if err != nil {

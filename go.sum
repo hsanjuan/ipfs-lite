@@ -83,8 +83,8 @@ github.com/ipfs/go-block-format v0.0.1/go.mod h1:DK/YYcsSUIVAFNwo/KZCdIIbpN0ROH/
 github.com/ipfs/go-block-format v0.0.2 h1:qPDvcP19izTjU8rgo6p7gTXZlkMkF5bz5G3fqIsSCPE=
 github.com/ipfs/go-block-format v0.0.2/go.mod h1:AWR46JfpcObNfg3ok2JHDUfdiHRgWhJgCQF+KIgOPJY=
 github.com/ipfs/go-blockservice v0.0.3/go.mod h1:/NNihwTi6V2Yr6g8wBI+BSwPuURpBRMtYNGrlxZ8KuI=
-github.com/ipfs/go-blockservice v0.0.6 h1:fevEIYlE/+Qvc83jFr9hwTSdLyRrdq4yK3L24U4fQBo=
-github.com/ipfs/go-blockservice v0.0.6/go.mod h1:EOfb9k/Y878ZTRY/CH0x5+ATtaipfbRhbvNSdgc/7So=
+github.com/ipfs/go-blockservice v0.0.7 h1:VRRVjgahs7r//MdO7yY5DJ2/i2fmkKOnxfSyfuPjTm0=
+github.com/ipfs/go-blockservice v0.0.7/go.mod h1:EOfb9k/Y878ZTRY/CH0x5+ATtaipfbRhbvNSdgc/7So=
 github.com/ipfs/go-cid v0.0.1/go.mod h1:GHWU/WuQdMPmIosc4Yn1bcCT7dSeX4lBafM7iqUPQvM=
 github.com/ipfs/go-cid v0.0.2 h1:tuuKaZPU1M6HcejsO3AcYWW8sZ8MTvyxfc4uqB4eFE8=
 github.com/ipfs/go-cid v0.0.2/go.mod h1:GHWU/WuQdMPmIosc4Yn1bcCT7dSeX4lBafM7iqUPQvM=
@@ -118,6 +118,8 @@ github.com/ipfs/go-ipfs-exchange-offline v0.0.1 h1:P56jYKZF7lDDOLx5SotVh5KFxoY6C
 github.com/ipfs/go-ipfs-exchange-offline v0.0.1/go.mod h1:WhHSFCVYX36H/anEKQboAzpUws3x7UeEGkzQc3iNkM0=
 github.com/ipfs/go-ipfs-files v0.0.2 h1:fEEjF4H+1t8SFOHqUGp0KqcwgIRlbD2bu8CAS2sIggE=
 github.com/ipfs/go-ipfs-files v0.0.2/go.mod h1:INEFm0LL2LWXBhNJ2PMIIb2w45hpXgPjNoE7yA8Y1d4=
+github.com/ipfs/go-ipfs-files v0.0.3 h1:ME+QnC3uOyla1ciRPezDW0ynQYK2ikOh9OCKAEg4uUA=
+github.com/ipfs/go-ipfs-files v0.0.3/go.mod h1:INEFm0LL2LWXBhNJ2PMIIb2w45hpXgPjNoE7yA8Y1d4=
 github.com/ipfs/go-ipfs-flags v0.0.1/go.mod h1:RnXBb9WV53GSfTrSDVK61NLTFKvWc60n+K9EgCDh+rA=
 github.com/ipfs/go-ipfs-posinfo v0.0.1 h1:Esoxj+1JgSjX0+ylc0hUmJCOv6V2vFoZiETLR6OtpRs=
 github.com/ipfs/go-ipfs-posinfo v0.0.1/go.mod h1:SwyeVP+jCwiDu0C313l/8jg6ZxM0qqtlt2a0vILTc1A=
