@@ -56,11 +56,18 @@ func BadgerDatastore(path string) (datastore.Batching, error) {
 // SetupLibp2p returns a routed host and DHT instances that can be used to
 // easily create a ipfslite Peer. The DHT is NOT bootstrapped. You may consider
 // to use Peer.Bootstrap() after creating the IPFS-Lite Peer.
+//
+// Additional libp2p options can be passed. Note that the Identity,
+// ListenAddrs and PrivateNetwork options will be setup automatically.
+// Interesting options to pass: NATPortMap(), EnableRelay(...),
+// EnableAutoRelay(), DisableRelay(), ConnectionManager(...)... see
+// https://godoc.org/github.com/libp2p/go-libp2p#Option for more info.
 func SetupLibp2p(
 	ctx context.Context,
 	hostKey crypto.PrivKey,
 	secret []byte,
 	listenAddrs []multiaddr.Multiaddr,
+	opts ...libp2p.Option,
 ) (host.Host, *dht.IpfsDHT, error) {
 
 	var prot ipnet.Protector
@@ -76,12 +83,16 @@ func SetupLibp2p(
 		}
 	}
 
-	h, err := libp2p.New(
-		ctx,
+	finalOpts := []libp2p.Option{
 		libp2p.Identity(hostKey),
 		libp2p.ListenAddrs(listenAddrs...),
 		libp2p.PrivateNetwork(prot),
-		libp2p.NATPortMap(),
+	}
+	finalOpts = append(finalOpts, opts...)
+
+	h, err := libp2p.New(
+		ctx,
+		finalOpts...,
 	)
 	if err != nil {
 		return nil, nil, err
