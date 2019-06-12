@@ -27,9 +27,9 @@ import (
 	"github.com/ipfs/go-unixfs/importer/helpers"
 	"github.com/ipfs/go-unixfs/importer/trickle"
 	ufsio "github.com/ipfs/go-unixfs/io"
-	host "github.com/libp2p/go-libp2p-host"
+	host "github.com/libp2p/go-libp2p-core/host"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	multihash "github.com/multiformats/go-multihash"
 )
 
@@ -108,14 +108,14 @@ func New(
 // logged and a warning is printed when less than half of the given peers
 // could be contacted. It is fine to pass a list where some peers will not be
 // reachable.
-func (p *Peer) Bootstrap(peers []peerstore.PeerInfo) {
+func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
 	connected := make(chan struct{})
 
 	var wg sync.WaitGroup
 	for _, pinfo := range peers {
 		//h.Peerstore().AddAddrs(pinfo.ID, pinfo.Addrs, peerstore.PermanentAddrTTL)
 		wg.Add(1)
-		go func(pinfo peerstore.PeerInfo) {
+		go func(pinfo peer.AddrInfo) {
 			defer wg.Done()
 			err := p.host.Connect(p.ctx, pinfo)
 			if err != nil {
