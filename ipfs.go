@@ -47,6 +47,9 @@ type Config struct {
 	Offline bool
 }
 
+func (cfg *Config) setDefaults() {
+}
+
 // Peer is an IPFS-Lite peer. It provides a DAG service that can fetch and put
 // blocks from/to the IPFS network.
 type Peer struct {
@@ -54,10 +57,13 @@ type Peer struct {
 
 	cfg *Config
 
-	ipld.DAGService
-	bstore blockstore.Blockstore
-	host   host.Host
-	dht    *dht.IpfsDHT
+	host  host.Host
+	dht   *dht.IpfsDHT
+	store datastore.Batching
+
+	ipld.DAGService // become a DAG service
+	bstore          blockstore.Blockstore
+	bserv           blockservice.BlockService
 }
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
@@ -76,31 +82,68 @@ func New(
 		cfg = &Config{}
 	}
 
-	bs := blockstore.NewBlockstore(store)
-	bs = blockstore.NewIdStore(bs)
-	cachedbs, err := blockstore.CachedBlockstore(ctx, bs, blockstore.DefaultCacheOpts())
+	cfg.setDefaults()
+
+	p := &Peer{
+		ctx:   ctx,
+		cfg:   cfg,
+		host:  host,
+		dht:   dht,
+		store: store,
+	}
+
+	err := p.setupBlockstore()
 	if err != nil {
 		return nil, err
 	}
-
-	var bserv blockservice.BlockService
-	if cfg.Offline {
-		bserv = blockservice.New(cachedbs, offline.Exchange(cachedbs))
-	} else {
-		bswapnet := network.NewFromIpfsHost(host, dht)
-		bswap := bitswap.New(ctx, bswapnet, cachedbs)
-		bserv = blockservice.New(cachedbs, bswap)
+	err = p.setupBlockService()
+	if err != nil {
+		return nil, err
+	}
+	err = p.setupDAGService()
+	if err != nil {
+		p.bserv.Close()
+		return nil, err
 	}
 
-	dags := merkledag.NewDAGService(bserv)
-	return &Peer{
-		ctx:        ctx,
-		DAGService: dags,
-		cfg:        cfg,
-		bstore:     cachedbs,
-		host:       host,
-		dht:        dht,
-	}, nil
+	go p.autoclose()
+
+	return p, nil
+}
+
+func (p *Peer) setupBlockstore() error {
+	bs := blockstore.NewBlockstore(p.store)
+	bs = blockstore.NewIdStore(bs)
+	cachedbs, err := blockstore.CachedBlockstore(p.ctx, bs, blockstore.DefaultCacheOpts())
+	if err != nil {
+		return err
+	}
+	p.bstore = cachedbs
+	return nil
+}
+
+func (p *Peer) setupBlockService() error {
+	if p.cfg.Offline {
+		p.bserv = blockservice.New(p.bstore, offline.Exchange(p.bstore))
+		return nil
+	}
+
+	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
+	bswap := bitswap.New(p.ctx, bswapnet, p.bstore)
+	p.bserv = blockservice.New(p.bstore, bswap)
+	return nil
+}
+
+func (p *Peer) setupDAGService() error {
+	p.DAGService = merkledag.NewDAGService(p.bserv)
+	return nil
+}
+
+func (p *Peer) autoclose() {
+	select {
+	case <-p.ctx.Done():
+		p.bserv.Close()
+	}
 }
 
 // Bootstrap is an optional helper to connect to the given peers and bootstrap
