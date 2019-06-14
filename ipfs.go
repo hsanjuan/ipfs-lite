@@ -9,6 +9,7 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ipfs/go-bitswap"
 	"github.com/ipfs/go-bitswap/network"
@@ -18,6 +19,9 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	chunker "github.com/ipfs/go-ipfs-chunker"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
+	"github.com/ipfs/go-ipfs-provider"
+	"github.com/ipfs/go-ipfs-provider/queue"
+	"github.com/ipfs/go-ipfs-provider/simple"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
@@ -41,10 +45,22 @@ func init() {
 
 var logger = logging.Logger("ipfslite")
 
+var (
+	defaultReprovideInterval = 12 * time.Hour
+)
+
 // Config wraps configuration options for the Peer.
 type Config struct {
 	// The DAGService will not announce or retrieve blocks from the network
 	Offline bool
+	// ReprovideInterval sets how often to reprovide records to the DHT
+	ReprovideInterval time.Duration
+}
+
+func (cfg *Config) setDefaults() {
+	if cfg.ReprovideInterval <= 0 {
+		cfg.ReprovideInterval = defaultReprovideInterval
+	}
 }
 
 // Peer is an IPFS-Lite peer. It provides a DAG service that can fetch and put
@@ -54,10 +70,14 @@ type Peer struct {
 
 	cfg *Config
 
-	ipld.DAGService
-	bstore blockstore.Blockstore
-	host   host.Host
-	dht    *dht.IpfsDHT
+	host  host.Host
+	dht   *dht.IpfsDHT
+	store datastore.Batching
+
+	ipld.DAGService // become a DAG service
+	bstore          blockstore.Blockstore
+	bserv           blockservice.BlockService
+	reprovider      provider.System
 }
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
@@ -76,31 +96,103 @@ func New(
 		cfg = &Config{}
 	}
 
-	bs := blockstore.NewBlockstore(store)
-	bs = blockstore.NewIdStore(bs)
-	cachedbs, err := blockstore.CachedBlockstore(ctx, bs, blockstore.DefaultCacheOpts())
+	cfg.setDefaults()
+
+	p := &Peer{
+		ctx:   ctx,
+		cfg:   cfg,
+		host:  host,
+		dht:   dht,
+		store: store,
+	}
+
+	err := p.setupBlockstore()
 	if err != nil {
 		return nil, err
 	}
-
-	var bserv blockservice.BlockService
-	if cfg.Offline {
-		bserv = blockservice.New(cachedbs, offline.Exchange(cachedbs))
-	} else {
-		bswapnet := network.NewFromIpfsHost(host, dht)
-		bswap := bitswap.New(ctx, bswapnet, cachedbs)
-		bserv = blockservice.New(cachedbs, bswap)
+	err = p.setupBlockService()
+	if err != nil {
+		return nil, err
+	}
+	err = p.setupDAGService()
+	if err != nil {
+		p.bserv.Close()
+		return nil, err
+	}
+	err = p.setupReprovider()
+	if err != nil {
+		p.bserv.Close()
+		return nil, err
 	}
 
-	dags := merkledag.NewDAGService(bserv)
-	return &Peer{
-		ctx:        ctx,
-		DAGService: dags,
-		cfg:        cfg,
-		bstore:     cachedbs,
-		host:       host,
-		dht:        dht,
-	}, nil
+	go p.autoclose()
+
+	return p, nil
+}
+
+func (p *Peer) setupBlockstore() error {
+	bs := blockstore.NewBlockstore(p.store)
+	bs = blockstore.NewIdStore(bs)
+	cachedbs, err := blockstore.CachedBlockstore(p.ctx, bs, blockstore.DefaultCacheOpts())
+	if err != nil {
+		return err
+	}
+	p.bstore = cachedbs
+	return nil
+}
+
+func (p *Peer) setupBlockService() error {
+	if p.cfg.Offline {
+		p.bserv = blockservice.New(p.bstore, offline.Exchange(p.bstore))
+		return nil
+	}
+
+	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
+	bswap := bitswap.New(p.ctx, bswapnet, p.bstore)
+	p.bserv = blockservice.New(p.bstore, bswap)
+	return nil
+}
+
+func (p *Peer) setupDAGService() error {
+	p.DAGService = merkledag.NewDAGService(p.bserv)
+	return nil
+}
+
+func (p *Peer) setupReprovider() error {
+	if p.cfg.Offline {
+		p.reprovider = provider.NewOfflineProvider()
+		return nil
+	}
+
+	queue, err := queue.NewQueue(p.ctx, "repro", p.store)
+	if err != nil {
+		return err
+	}
+
+	prov := simple.NewProvider(
+		p.ctx,
+		queue,
+		p.dht,
+	)
+
+	reprov := simple.NewReprovider(
+		p.ctx,
+		p.cfg.ReprovideInterval,
+		p.dht,
+		simple.NewBlockstoreProvider(p.bstore),
+	)
+
+	p.reprovider = provider.NewSystem(prov, reprov)
+	p.reprovider.Run()
+	return nil
+}
+
+func (p *Peer) autoclose() {
+	select {
+	case <-p.ctx.Done():
+		p.reprovider.Close()
+		p.bserv.Close()
+	}
 }
 
 // Bootstrap is an optional helper to connect to the given peers and bootstrap
@@ -205,14 +297,16 @@ func (p *Peer) AddFile(ctx context.Context, r io.Reader, params *AddParams) (ipl
 		return nil, err
 	}
 
+	var n ipld.Node
 	switch params.Layout {
 	case "trickle":
-		return trickle.Layout(dbh)
+		n, err = trickle.Layout(dbh)
 	case "balanced", "":
-		return balanced.Layout(dbh)
+		n, err = balanced.Layout(dbh)
 	default:
 		return nil, errors.New("invalid Layout")
 	}
+	return n, err
 }
 
 // GetFile returns a reader to a file as identified by its root CID. The file
