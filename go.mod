@@ -4,8 +4,7 @@ go 1.12
 
 require (
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
-	github.com/btcsuite/btcd v0.0.0-20190614013741-962a206e94e9 // indirect
-	github.com/ipfs/go-bitswap v0.1.2
+	github.com/ipfs/go-bitswap v0.1.3
 	github.com/ipfs/go-blockservice v0.1.0
 	github.com/ipfs/go-cid v0.0.2
 	github.com/ipfs/go-cidutil v0.0.2 // indirect
@@ -29,6 +28,4 @@ require (
 	github.com/libp2p/go-libp2p-pnet v0.1.0
 	github.com/multiformats/go-multiaddr v0.0.4
 	github.com/multiformats/go-multihash v0.0.6
-	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980 // indirect
-	golang.org/x/sys v0.0.0-20190614084037-d442b75600c5 // indirect
 )
