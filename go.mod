@@ -9,7 +9,7 @@ require (
 	github.com/ipfs/go-cid v0.0.2
 	github.com/ipfs/go-cidutil v0.0.2 // indirect
 	github.com/ipfs/go-datastore v0.0.5
-	github.com/ipfs/go-ds-badger v0.0.3
+	github.com/ipfs/go-ds-badger v0.0.4
 	github.com/ipfs/go-ipfs-blockstore v0.0.1
 	github.com/ipfs/go-ipfs-chunker v0.0.1
 	github.com/ipfs/go-ipfs-config v0.0.6
@@ -28,4 +28,5 @@ require (
 	github.com/libp2p/go-libp2p-pnet v0.1.0
 	github.com/multiformats/go-multiaddr v0.0.4
 	github.com/multiformats/go-multihash v0.0.6
+	google.golang.org/appengine v1.4.0 // indirect
 )
