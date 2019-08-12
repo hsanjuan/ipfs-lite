@@ -211,7 +211,7 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
 			defer wg.Done()
 			err := p.host.Connect(p.ctx, pinfo)
 			if err != nil {
-				logger.Error(err)
+				logger.Warning(err)
 				return
 			}
 			logger.Info("Connected to", pinfo.ID)
