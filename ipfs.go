@@ -19,7 +19,7 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	chunker "github.com/ipfs/go-ipfs-chunker"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
-	"github.com/ipfs/go-ipfs-provider"
+	provider "github.com/ipfs/go-ipfs-provider"
 	"github.com/ipfs/go-ipfs-provider/queue"
 	"github.com/ipfs/go-ipfs-provider/simple"
 	cbor "github.com/ipfs/go-ipld-cbor"
@@ -229,7 +229,7 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
 		i++
 	}
 	if nPeers := len(peers); i < nPeers/2 {
-		logger.Warning("only connected to %d bootstrap peers out of %d", i, nPeers)
+		logger.Warningf("only connected to %d bootstrap peers out of %d", i, nPeers)
 	}
 
 	err := p.dht.Bootstrap(p.ctx)
