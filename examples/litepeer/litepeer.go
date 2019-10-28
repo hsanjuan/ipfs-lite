@@ -10,7 +10,7 @@ import (
 
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-log"
+	corecrypto "github.com/libp2p/go-libp2p-core/crypto"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/multiformats/go-multiaddr"
 )
@@ -19,7 +19,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	log.SetLogLevel("*", "warn")
+	// Bootstrappers are using 1024 keys. See:
+	// https://github.com/ipfs/infra/issues/378
+	corecrypto.MinRsaKeyBits = 1024
 
 	ds, err := ipfslite.BadgerDatastore("test")
 	if err != nil {
