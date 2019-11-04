@@ -39,6 +39,7 @@ func main() {
 		priv,
 		nil,
 		[]multiaddr.Multiaddr{listen},
+		ipfslite.Libp2pOptionsExtra...,
 	)
 
 	if err != nil {

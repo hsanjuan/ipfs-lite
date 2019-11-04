@@ -5,18 +5,25 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"time"
 
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
 	config "github.com/ipfs/go-ipfs-config"
 	"github.com/libp2p/go-libp2p"
+	autonat "github.com/libp2p/go-libp2p-autonat-svc"
+	circuit "github.com/libp2p/go-libp2p-circuit"
+	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	host "github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	ipnet "github.com/libp2p/go-libp2p-core/pnet"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pnet "github.com/libp2p/go-libp2p-pnet"
-	routedhost "github.com/libp2p/go-libp2p/p2p/host/routed"
+	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
+	routing "github.com/libp2p/go-libp2p-routing"
+	secio "github.com/libp2p/go-libp2p-secio"
+	libp2ptls "github.com/libp2p/go-libp2p-tls"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -53,6 +60,20 @@ func BadgerDatastore(path string) (datastore.Batching, error) {
 	return badger.NewDatastore(path, &badger.DefaultOptions)
 }
 
+// Libp2pOptionsExtra provides some useful libp2p options
+// to create a fully featured libp2p host. It can be used with
+// SetupLibp2p.
+var Libp2pOptionsExtra = []libp2p.Option{
+	libp2p.NATPortMap(),
+	libp2p.ConnectionManager(connmgr.NewConnManager(100, 600, time.Minute)),
+	libp2p.EnableRelay(circuit.OptDiscovery),
+	libp2p.EnableAutoRelay(),
+	libp2p.Security(libp2ptls.ID, libp2ptls.New),
+	libp2p.Security(secio.ID, secio.New),
+	libp2p.Transport(libp2pquic.NewTransport),
+	libp2p.DefaultTransports,
+}
+
 // SetupLibp2p returns a routed host and DHT instances that can be used to
 // easily create a ipfslite Peer. The DHT is NOT bootstrapped. You may consider
 // to use Peer.Bootstrap() after creating the IPFS-Lite Peer.
@@ -71,6 +92,7 @@ func SetupLibp2p(
 ) (host.Host, *dht.IpfsDHT, error) {
 
 	var prot ipnet.Protector
+	var idht *dht.IpfsDHT
 	var err error
 
 	// Create protector if we have a secret.
@@ -87,6 +109,10 @@ func SetupLibp2p(
 		libp2p.Identity(hostKey),
 		libp2p.ListenAddrs(listenAddrs...),
 		libp2p.PrivateNetwork(prot),
+		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
+			idht, err = dht.New(ctx, h)
+			return idht, err
+		}),
 	}
 	finalOpts = append(finalOpts, opts...)
 
@@ -98,12 +124,19 @@ func SetupLibp2p(
 		return nil, nil, err
 	}
 
-	idht, err := dht.New(ctx, h)
+	autonatOpts := []libp2p.Option{
+		libp2p.PrivateNetwork(prot),
+		libp2p.Security(libp2ptls.ID, libp2ptls.New),
+		libp2p.Security(secio.ID, secio.New),
+		libp2p.Transport(libp2pquic.NewTransport),
+		libp2p.DefaultTransports,
+	}
+
+	_, err = autonat.NewAutoNATService(ctx, h, autonatOpts...)
 	if err != nil {
 		h.Close()
 		return nil, nil, err
 	}
 
-	rHost := routedhost.Wrap(h, idht)
-	return rHost, idht, nil
+	return h, idht, nil
 }
