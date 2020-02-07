@@ -19,6 +19,7 @@ import (
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	ipnet "github.com/libp2p/go-libp2p-core/pnet"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	dhtopts "github.com/libp2p/go-libp2p-kad-dht/opts"
 	pnet "github.com/libp2p/go-libp2p-pnet"
 	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
 	routing "github.com/libp2p/go-libp2p-routing"
@@ -75,8 +76,10 @@ var Libp2pOptionsExtra = []libp2p.Option{
 }
 
 // SetupLibp2p returns a routed host and DHT instances that can be used to
-// easily create a ipfslite Peer. The DHT is NOT bootstrapped. You may consider
-// to use Peer.Bootstrap() after creating the IPFS-Lite Peer.
+// easily create a ipfslite Peer. The DHT is NOT bootstrapped. You may
+// consider to use Peer.Bootstrap() after creating the IPFS-Lite Peer.  When
+// the datastore parameter is nil, the DHT will use an in-memory datastore, so
+// all provider records are lost on program shutdown.
 //
 // Additional libp2p options can be passed. Note that the Identity,
 // ListenAddrs and PrivateNetwork options will be setup automatically.
@@ -88,6 +91,7 @@ func SetupLibp2p(
 	hostKey crypto.PrivKey,
 	secret []byte,
 	listenAddrs []multiaddr.Multiaddr,
+	ds datastore.Batching,
 	opts ...libp2p.Option,
 ) (host.Host, *dht.IpfsDHT, error) {
 
@@ -133,6 +137,13 @@ func SetupLibp2p(
 	}
 
 	_, err = autonat.NewAutoNATService(ctx, h, autonatOpts...)
+
+	var dhtOpts []dhtopts.Option
+	if ds != nil {
+		dhtOpts = append(dhtOpts, dhtopts.Datastore(ds))
+	}
+
+	idht, err = dht.New(ctx, h, dhtOpts...)
 	if err != nil {
 		h.Close()
 		return nil, nil, err

@@ -39,6 +39,7 @@ func main() {
 		priv,
 		nil,
 		[]multiaddr.Multiaddr{listen},
+		ds,
 		ipfslite.Libp2pOptionsExtra...,
 	)
 
