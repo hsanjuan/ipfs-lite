@@ -24,7 +24,7 @@ import (
 	"github.com/ipfs/go-ipfs-provider/simple"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	ipld "github.com/ipfs/go-ipld-format"
-	logging "github.com/ipfs/go-log"
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipfs/go-merkledag"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ipfs/go-unixfs/importer/balanced"
@@ -211,7 +211,7 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
 			defer wg.Done()
 			err := p.host.Connect(p.ctx, pinfo)
 			if err != nil {
-				logger.Warning(err)
+				logger.Warn(err)
 				return
 			}
 			logger.Info("Connected to", pinfo.ID)
@@ -229,7 +229,7 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
 		i++
 	}
 	if nPeers := len(peers); i < nPeers/2 {
-		logger.Warningf("only connected to %d bootstrap peers out of %d", i, nPeers)
+		logger.Warnf("only connected to %d bootstrap peers out of %d", i, nPeers)
 	}
 
 	err := p.dht.Bootstrap(p.ctx)
@@ -243,7 +243,7 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
 func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
 	ng := merkledag.NewSession(ctx, p.DAGService)
 	if ng == p.DAGService {
-		logger.Warning("DAGService does not support sessions")
+		logger.Warn("DAGService does not support sessions")
 	}
 	return ng
 }

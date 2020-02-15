@@ -1,6 +1,6 @@
 module github.com/hsanjuan/ipfs-lite
 
-go 1.12
+go 1.13
 
 require (
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
@@ -16,7 +16,7 @@ require (
 	github.com/ipfs/go-ipfs-provider v0.3.0
 	github.com/ipfs/go-ipld-cbor v0.0.4
 	github.com/ipfs/go-ipld-format v0.0.2
-	github.com/ipfs/go-log v1.0.2
+	github.com/ipfs/go-log/v2 v2.0.2
 	github.com/ipfs/go-merkledag v0.3.1
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/libp2p/go-libp2p v0.5.2

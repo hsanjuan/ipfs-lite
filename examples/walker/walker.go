@@ -8,7 +8,7 @@ import (
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/ipfs/go-cid"
 	format "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	corecrypto "github.com/libp2p/go-libp2p-core/crypto"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/multiformats/go-multiaddr"
