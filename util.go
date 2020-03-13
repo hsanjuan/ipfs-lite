@@ -17,11 +17,9 @@ import (
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	host "github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
-	ipnet "github.com/libp2p/go-libp2p-core/pnet"
+	pnet "github.com/libp2p/go-libp2p-core/pnet"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dhtopts "github.com/libp2p/go-libp2p-kad-dht/opts"
-	pnet "github.com/libp2p/go-libp2p-pnet"
-	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
 	routing "github.com/libp2p/go-libp2p-routing"
 	secio "github.com/libp2p/go-libp2p-secio"
 	libp2ptls "github.com/libp2p/go-libp2p-tls"
@@ -71,7 +69,8 @@ var Libp2pOptionsExtra = []libp2p.Option{
 	libp2p.EnableAutoRelay(),
 	libp2p.Security(libp2ptls.ID, libp2ptls.New),
 	libp2p.Security(secio.ID, secio.New),
-	libp2p.Transport(libp2pquic.NewTransport),
+	// TODO: re-enable when QUIC support private networks.
+	// libp2p.Transport(libp2pquic.NewTransport),
 	libp2p.DefaultTransports,
 }
 
@@ -86,33 +85,24 @@ var Libp2pOptionsExtra = []libp2p.Option{
 // Interesting options to pass: NATPortMap(), EnableRelay(...),
 // EnableAutoRelay(), DisableRelay(), ConnectionManager(...)... see
 // https://godoc.org/github.com/libp2p/go-libp2p#Option for more info.
+//
+// The secret should be a 32-byte pre-shared-key byte slice.
 func SetupLibp2p(
 	ctx context.Context,
 	hostKey crypto.PrivKey,
-	secret []byte,
+	secret pnet.PSK,
 	listenAddrs []multiaddr.Multiaddr,
 	ds datastore.Batching,
 	opts ...libp2p.Option,
 ) (host.Host, *dht.IpfsDHT, error) {
 
-	var prot ipnet.Protector
 	var idht *dht.IpfsDHT
 	var err error
-
-	// Create protector if we have a secret.
-	if secret != nil && len(secret) > 0 {
-		var key [32]byte
-		copy(key[:], secret)
-		prot, err = pnet.NewV1ProtectorFromBytes(&key)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
 
 	finalOpts := []libp2p.Option{
 		libp2p.Identity(hostKey),
 		libp2p.ListenAddrs(listenAddrs...),
-		libp2p.PrivateNetwork(prot),
+		libp2p.PrivateNetwork(secret),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
 			idht, err = dht.New(ctx, h)
 			return idht, err
@@ -129,10 +119,11 @@ func SetupLibp2p(
 	}
 
 	autonatOpts := []libp2p.Option{
-		libp2p.PrivateNetwork(prot),
+		libp2p.PrivateNetwork(secret),
 		libp2p.Security(libp2ptls.ID, libp2ptls.New),
 		libp2p.Security(secio.ID, secio.New),
-		libp2p.Transport(libp2pquic.NewTransport),
+		// TODO: QUIC does not support private networks.
+		//libp2p.Transport(libp2pquic.NewTransport),
 		libp2p.DefaultTransports,
 	}
 

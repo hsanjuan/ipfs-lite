@@ -3,6 +3,7 @@ package ipfslite
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"testing"
@@ -16,7 +17,7 @@ import (
 	multihash "github.com/multiformats/go-multihash"
 )
 
-var secret = []byte("2cc2c79ea52c9cc85dfd3061961dd8c4230cce0b09f182a0822c1536bf1d5f21")
+var secret = "2cc2c79ea52c9cc85dfd3061961dd8c4230cce0b09f182a0822c1536bf1d5f21"
 
 func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -32,11 +33,16 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 		t.Fatal(err)
 	}
 
+	psk, err := hex.DecodeString(secret)
+	if err != nil {
+		t.Fatal(t)
+	}
+
 	listen, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/0")
 	h1, dht1, err := SetupLibp2p(
 		ctx,
 		priv1,
-		secret,
+		psk,
 		[]multiaddr.Multiaddr{listen},
 		nil,
 		Libp2pOptionsExtra...,
@@ -53,7 +59,7 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 	h2, dht2, err := SetupLibp2p(
 		ctx,
 		priv2,
-		secret,
+		psk,
 		[]multiaddr.Multiaddr{listen},
 		nil,
 		Libp2pOptionsExtra...,
