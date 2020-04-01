@@ -10,7 +10,7 @@ require (
 	github.com/ipfs/go-datastore v0.4.4
 	github.com/ipfs/go-ds-badger v0.2.1
 	github.com/ipfs/go-ipfs-blockstore v1.0.0
-	github.com/ipfs/go-ipfs-chunker v0.0.4
+	github.com/ipfs/go-ipfs-chunker v0.0.5
 	github.com/ipfs/go-ipfs-config v0.2.1
 	github.com/ipfs/go-ipfs-exchange-offline v0.0.1
 	github.com/ipfs/go-ipfs-provider v0.4.1
