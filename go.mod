@@ -19,7 +19,7 @@ require (
 	github.com/ipfs/go-log/v2 v2.0.3
 	github.com/ipfs/go-merkledag v0.3.1
 	github.com/ipfs/go-unixfs v0.2.4
-	github.com/libp2p/go-libp2p v0.7.2
+	github.com/libp2p/go-libp2p v0.7.4
 	github.com/libp2p/go-libp2p-autonat-svc v0.1.0
 	github.com/libp2p/go-libp2p-circuit v0.1.4
 	github.com/libp2p/go-libp2p-connmgr v0.2.1
