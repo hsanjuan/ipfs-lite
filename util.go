@@ -10,16 +10,15 @@ import (
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
 	config "github.com/ipfs/go-ipfs-config"
+	ipns "github.com/ipfs/go-ipns"
 	"github.com/libp2p/go-libp2p"
-	autonat "github.com/libp2p/go-libp2p-autonat-svc"
-	circuit "github.com/libp2p/go-libp2p-circuit"
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	host "github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	pnet "github.com/libp2p/go-libp2p-core/pnet"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	dhtopts "github.com/libp2p/go-libp2p-kad-dht/opts"
+	record "github.com/libp2p/go-libp2p-record"
 	routing "github.com/libp2p/go-libp2p-routing"
 	secio "github.com/libp2p/go-libp2p-secio"
 	libp2ptls "github.com/libp2p/go-libp2p-tls"
@@ -65,8 +64,8 @@ func BadgerDatastore(path string) (datastore.Batching, error) {
 var Libp2pOptionsExtra = []libp2p.Option{
 	libp2p.NATPortMap(),
 	libp2p.ConnectionManager(connmgr.NewConnManager(100, 600, time.Minute)),
-	libp2p.EnableRelay(circuit.OptDiscovery),
 	libp2p.EnableAutoRelay(),
+	libp2p.EnableNATService(),
 	libp2p.Security(libp2ptls.ID, libp2ptls.New),
 	libp2p.Security(secio.ID, secio.New),
 	// TODO: re-enable when QUIC support private networks.
@@ -75,15 +74,15 @@ var Libp2pOptionsExtra = []libp2p.Option{
 }
 
 // SetupLibp2p returns a routed host and DHT instances that can be used to
-// easily create a ipfslite Peer. The DHT is NOT bootstrapped. You may
-// consider to use Peer.Bootstrap() after creating the IPFS-Lite Peer.  When
-// the datastore parameter is nil, the DHT will use an in-memory datastore, so
-// all provider records are lost on program shutdown.
+// easily create a ipfslite Peer. You may consider to use Peer.Bootstrap()
+// after creating the IPFS-Lite Peer to connect to other peers. When the
+// datastore parameter is nil, the DHT will use an in-memory datastore, so all
+// provider records are lost on program shutdown.
 //
 // Additional libp2p options can be passed. Note that the Identity,
 // ListenAddrs and PrivateNetwork options will be setup automatically.
-// Interesting options to pass: NATPortMap(), EnableRelay(...),
-// EnableAutoRelay(), DisableRelay(), ConnectionManager(...)... see
+// Interesting options to pass: NATPortMap() EnableAutoRelay(),
+// libp2p.EnableNATService(), DisableRelay(), ConnectionManager(...)... see
 // https://godoc.org/github.com/libp2p/go-libp2p#Option for more info.
 //
 // The secret should be a 32-byte pre-shared-key byte slice.
@@ -104,7 +103,7 @@ func SetupLibp2p(
 		libp2p.ListenAddrs(listenAddrs...),
 		libp2p.PrivateNetwork(secret),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
-			idht, err = dht.New(ctx, h)
+			idht, err = newDHT(ctx, h, ds)
 			return idht, err
 		}),
 	}
@@ -118,27 +117,20 @@ func SetupLibp2p(
 		return nil, nil, err
 	}
 
-	autonatOpts := []libp2p.Option{
-		libp2p.PrivateNetwork(secret),
-		libp2p.Security(libp2ptls.ID, libp2ptls.New),
-		libp2p.Security(secio.ID, secio.New),
-		// TODO: QUIC does not support private networks.
-		//libp2p.Transport(libp2pquic.NewTransport),
-		libp2p.DefaultTransports,
-	}
-
-	_, err = autonat.NewAutoNATService(ctx, h, autonatOpts...)
-
-	var dhtOpts []dhtopts.Option
-	if ds != nil {
-		dhtOpts = append(dhtOpts, dhtopts.Datastore(ds))
-	}
-
-	idht, err = dht.New(ctx, h, dhtOpts...)
-	if err != nil {
-		h.Close()
-		return nil, nil, err
-	}
-
 	return h, idht, nil
+}
+
+func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dht.IpfsDHT, error) {
+	dhtOpts := []dht.Option{
+		dht.NamespacedValidator("pk", record.PublicKeyValidator{}),
+		dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()}),
+		dht.Concurrency(10),
+		dht.Mode(dht.ModeAuto),
+	}
+	if ds != nil {
+		dhtOpts = append(dhtOpts, dht.Datastore(ds))
+	}
+
+	return dht.New(ctx, h, dhtOpts...)
+
 }
