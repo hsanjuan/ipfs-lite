@@ -11,8 +11,8 @@ import (
 	datastore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	cbor "github.com/ipfs/go-ipld-cbor"
-	crypto "github.com/libp2p/go-libp2p-crypto"
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 	multiaddr "github.com/multiformats/go-multiaddr"
 	multihash "github.com/multiformats/go-multihash"
 )
@@ -51,7 +51,7 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 		t.Fatal(err)
 	}
 
-	pinfo1 := peerstore.PeerInfo{
+	pinfo1 := peer.AddrInfo{
 		ID:    h1.ID(),
 		Addrs: h1.Addrs(),
 	}
@@ -68,7 +68,7 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 		t.Fatal(err)
 	}
 
-	pinfo2 := peerstore.PeerInfo{
+	pinfo2 := peer.AddrInfo{
 		ID:    h2.ID(),
 		Addrs: h2.Addrs(),
 	}
@@ -93,8 +93,8 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 		t.Fatal(err)
 	}
 
-	p1.Bootstrap([]peerstore.PeerInfo{pinfo2})
-	p2.Bootstrap([]peerstore.PeerInfo{pinfo1})
+	p1.Bootstrap([]peer.AddrInfo{pinfo2})
+	p2.Bootstrap([]peer.AddrInfo{pinfo1})
 
 	return
 }

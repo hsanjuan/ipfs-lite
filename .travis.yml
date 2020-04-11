@@ -16,11 +16,12 @@ env:
   - GO111MODULE=on
 
 install:
-  - true
+  - go get honnef.co/go/tools/cmd/staticcheck
 
 script:
   - go test -v -race -coverprofile=coverage.txt -covermode=atomic
   - go build ./... # build the examples too
+  - staticcheck ./...
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 
