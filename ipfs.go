@@ -26,7 +26,6 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipfs/go-merkledag"
-	dag "github.com/ipfs/go-merkledag"
 	"github.com/ipfs/go-unixfs/importer/balanced"
 	"github.com/ipfs/go-unixfs/importer/helpers"
 	"github.com/ipfs/go-unixfs/importer/trickle"
@@ -38,8 +37,8 @@ import (
 )
 
 func init() {
-	ipld.Register(cid.DagProtobuf, dag.DecodeProtobufBlock)
-	ipld.Register(cid.Raw, dag.DecodeRawBlock)
+	ipld.Register(cid.DagProtobuf, merkledag.DecodeProtobufBlock)
+	ipld.Register(cid.Raw, merkledag.DecodeRawBlock)
 	ipld.Register(cid.DagCBOR, cbor.DecodeBlock) // need to decode CBOR
 }
 
@@ -188,11 +187,9 @@ func (p *Peer) setupReprovider() error {
 }
 
 func (p *Peer) autoclose() {
-	select {
-	case <-p.ctx.Done():
-		p.reprovider.Close()
-		p.bserv.Close()
-	}
+	<-p.ctx.Done()
+	p.reprovider.Close()
+	p.bserv.Close()
 }
 
 // Bootstrap is an optional helper to connect to the given peers and bootstrap
@@ -292,6 +289,9 @@ func (p *Peer) AddFile(ctx context.Context, r io.Reader, params *AddParams) (ipl
 	}
 
 	chnk, err := chunker.FromString(r, params.Chunker)
+	if err != nil {
+		return nil, err
+	}
 	dbh, err := dbp.New(chnk)
 	if err != nil {
 		return nil, err
