@@ -19,6 +19,7 @@ import (
 	pnet "github.com/libp2p/go-libp2p-core/pnet"
 	routing "github.com/libp2p/go-libp2p-core/routing"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	record "github.com/libp2p/go-libp2p-record"
 	secio "github.com/libp2p/go-libp2p-secio"
 	libp2ptls "github.com/libp2p/go-libp2p-tls"
@@ -93,9 +94,9 @@ func SetupLibp2p(
 	listenAddrs []multiaddr.Multiaddr,
 	ds datastore.Batching,
 	opts ...libp2p.Option,
-) (host.Host, *dht.IpfsDHT, error) {
+) (host.Host, *dualdht.DHT, error) {
 
-	var idht *dht.IpfsDHT
+	var ddht *dualdht.DHT
 	var err error
 
 	finalOpts := []libp2p.Option{
@@ -103,8 +104,8 @@ func SetupLibp2p(
 		libp2p.ListenAddrs(listenAddrs...),
 		libp2p.PrivateNetwork(secret),
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
-			idht, err = newDHT(ctx, h, ds)
-			return idht, err
+			ddht, err = newDHT(ctx, h, ds)
+			return ddht, err
 		}),
 	}
 	finalOpts = append(finalOpts, opts...)
@@ -117,10 +118,10 @@ func SetupLibp2p(
 		return nil, nil, err
 	}
 
-	return h, idht, nil
+	return h, ddht, nil
 }
 
-func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dht.IpfsDHT, error) {
+func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dualdht.DHT, error) {
 	dhtOpts := []dht.Option{
 		dht.NamespacedValidator("pk", record.PublicKeyValidator{}),
 		dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()}),
@@ -131,6 +132,6 @@ func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dht.IpfsD
 		dhtOpts = append(dhtOpts, dht.Datastore(ds))
 	}
 
-	return dht.New(ctx, h, dhtOpts...)
+	return dualdht.New(ctx, h, dhtOpts...)
 
 }

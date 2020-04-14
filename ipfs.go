@@ -32,7 +32,7 @@ import (
 	ufsio "github.com/ipfs/go-unixfs/io"
 	host "github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
+	routing "github.com/libp2p/go-libp2p-core/routing"
 	multihash "github.com/multiformats/go-multihash"
 )
 
@@ -70,7 +70,7 @@ type Peer struct {
 	cfg *Config
 
 	host  host.Host
-	dht   *dht.IpfsDHT
+	dht   routing.Routing
 	store datastore.Batching
 
 	ipld.DAGService // become a DAG service
@@ -80,14 +80,14 @@ type Peer struct {
 }
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
-// DHT. The Host and the DHT may be nil if config.Offline is set to true, as
-// they are not used in that case. Peer implements the ipld.DAGService
-// interface.
+// Routing (usuall the DHT). The Host and the Routing may be nil if
+// config.Offline is set to true, as they are not used in that case. Peer
+// implements the ipld.DAGService interface.
 func New(
 	ctx context.Context,
 	store datastore.Batching,
 	host host.Host,
-	dht *dht.IpfsDHT,
+	dht routing.Routing,
 	cfg *Config,
 ) (*Peer, error) {
 
