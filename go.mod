@@ -18,7 +18,7 @@ require (
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-ipns v0.0.2
 	github.com/ipfs/go-log/v2 v2.0.5
-	github.com/ipfs/go-merkledag v0.3.1
+	github.com/ipfs/go-merkledag v0.3.2
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/libp2p/go-libp2p v0.8.2
 	github.com/libp2p/go-libp2p-connmgr v0.2.1
