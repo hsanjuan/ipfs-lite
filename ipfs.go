@@ -4,36 +4,24 @@ package ipfslite
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"io"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/StreamSpace/ss-light-client/scp"
 	"github.com/ipfs/go-bitswap"
-	"github.com/ipfs/go-bitswap/network"
 	blockservice "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	chunker "github.com/ipfs/go-ipfs-chunker"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
-	provider "github.com/ipfs/go-ipfs-provider"
-	"github.com/ipfs/go-ipfs-provider/queue"
-	"github.com/ipfs/go-ipfs-provider/simple"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipfs/go-merkledag"
-	"github.com/ipfs/go-unixfs/importer/balanced"
-	"github.com/ipfs/go-unixfs/importer/helpers"
-	"github.com/ipfs/go-unixfs/importer/trickle"
 	ufsio "github.com/ipfs/go-unixfs/io"
 	host "github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	routing "github.com/libp2p/go-libp2p-core/routing"
-	multihash "github.com/multiformats/go-multihash"
 )
 
 func init() {
@@ -76,7 +64,6 @@ type Peer struct {
 	ipld.DAGService // become a DAG service
 	bstore          blockstore.Blockstore
 	bserv           blockservice.BlockService
-	reprovider      provider.System
 }
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
@@ -118,11 +105,6 @@ func New(
 		p.bserv.Close()
 		return nil, err
 	}
-	err = p.setupReprovider()
-	if err != nil {
-		p.bserv.Close()
-		return nil, err
-	}
 
 	go p.autoclose()
 
@@ -146,8 +128,15 @@ func (p *Peer) setupBlockService() error {
 		return nil
 	}
 
-	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
-	bswap := bitswap.New(p.ctx, bswapnet, p.bstore)
+	scpModule, err := scp.NewScpModule(p.ctx, p.host, p.dht, scp.Params{
+		Root:     "",
+		DeviceID: "",
+		Role:     "light-client",
+	})
+	if err != nil {
+		return err
+	}
+	bswap := bitswap.New(p.ctx, scpModule, p.bstore)
 	p.bserv = blockservice.New(p.bstore, bswap)
 	return nil
 }
@@ -157,38 +146,8 @@ func (p *Peer) setupDAGService() error {
 	return nil
 }
 
-func (p *Peer) setupReprovider() error {
-	if p.cfg.Offline {
-		p.reprovider = provider.NewOfflineProvider()
-		return nil
-	}
-
-	queue, err := queue.NewQueue(p.ctx, "repro", p.store)
-	if err != nil {
-		return err
-	}
-
-	prov := simple.NewProvider(
-		p.ctx,
-		queue,
-		p.dht,
-	)
-
-	reprov := simple.NewReprovider(
-		p.ctx,
-		p.cfg.ReprovideInterval,
-		p.dht,
-		simple.NewBlockstoreProvider(p.bstore),
-	)
-
-	p.reprovider = provider.NewSystem(prov, reprov)
-	p.reprovider.Run()
-	return nil
-}
-
 func (p *Peer) autoclose() {
 	<-p.ctx.Done()
-	p.reprovider.Close()
 	p.bserv.Close()
 }
 
@@ -243,70 +202,6 @@ func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
 		logger.Warn("DAGService does not support sessions")
 	}
 	return ng
-}
-
-// AddParams contains all of the configurable parameters needed to specify the
-// importing process of a file.
-type AddParams struct {
-	Layout    string
-	Chunker   string
-	RawLeaves bool
-	Hidden    bool
-	Shard     bool
-	NoCopy    bool
-	HashFun   string
-}
-
-// AddFile chunks and adds content to the DAGService from a reader. The content
-// is stored as a UnixFS DAG (default for IPFS). It returns the root
-// ipld.Node.
-func (p *Peer) AddFile(ctx context.Context, r io.Reader, params *AddParams) (ipld.Node, error) {
-	if params == nil {
-		params = &AddParams{}
-	}
-	if params.HashFun == "" {
-		params.HashFun = "sha2-256"
-	}
-
-	prefix, err := merkledag.PrefixForCidVersion(1)
-	if err != nil {
-		return nil, fmt.Errorf("bad CID Version: %s", err)
-	}
-
-	hashFunCode, ok := multihash.Names[strings.ToLower(params.HashFun)]
-	if !ok {
-		return nil, fmt.Errorf("unrecognized hash function: %s", params.HashFun)
-	}
-	prefix.MhType = hashFunCode
-	prefix.MhLength = -1
-
-	dbp := helpers.DagBuilderParams{
-		Dagserv:    p,
-		RawLeaves:  params.RawLeaves,
-		Maxlinks:   helpers.DefaultLinksPerBlock,
-		NoCopy:     params.NoCopy,
-		CidBuilder: &prefix,
-	}
-
-	chnk, err := chunker.FromString(r, params.Chunker)
-	if err != nil {
-		return nil, err
-	}
-	dbh, err := dbp.New(chnk)
-	if err != nil {
-		return nil, err
-	}
-
-	var n ipld.Node
-	switch params.Layout {
-	case "trickle":
-		n, err = trickle.Layout(dbh)
-	case "balanced", "":
-		n, err = balanced.Layout(dbh)
-	default:
-		return nil, errors.New("invalid Layout")
-	}
-	return n, err
 }
 
 // GetFile returns a reader to a file as identified by its root CID. The file
