@@ -2,14 +2,10 @@ package ipfslite
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"os/user"
 	"time"
 
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
-	config "github.com/ipfs/go-ipfs-config"
 	ipns "github.com/ipfs/go-ipns"
 	"github.com/libp2p/go-libp2p"
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
@@ -29,28 +25,7 @@ import (
 // DefaultBootstrapPeers returns the default go-ipfs bootstrap peers (for use
 // with NewLibp2pHost.
 func DefaultBootstrapPeers() []peer.AddrInfo {
-	defaults, _ := config.DefaultBootstrapPeers()
-	return defaults
-}
-
-// IPFSBadgerDatastore returns the Badger datastore used by the IPFS daemon
-// (from `~/.ipfs/datastore`). Do not use the default datastore when the
-// regular IFPS daemon is running at the same time.
-func IPFSBadgerDatastore() (datastore.Batching, error) {
-	home := os.Getenv("HOME")
-	if home == "" {
-		usr, err := user.Current()
-		if err != nil {
-			panic(fmt.Sprintf("cannot get current user: %s", err))
-		}
-		home = usr.HomeDir
-	}
-
-	path, err := config.DataStorePath(home)
-	if err != nil {
-		return nil, err
-	}
-	return BadgerDatastore(path)
+	return []peer.AddrInfo{}
 }
 
 // BadgerDatastore returns a new instance of Badger-DS persisting
@@ -117,7 +92,6 @@ func SetupLibp2p(
 	if err != nil {
 		return nil, nil, err
 	}
-
 	return h, ddht, nil
 }
 
@@ -126,12 +100,10 @@ func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dualdht.D
 		dht.NamespacedValidator("pk", record.PublicKeyValidator{}),
 		dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()}),
 		dht.Concurrency(10),
-		dht.Mode(dht.ModeAuto),
+		dht.Mode(dht.ModeClient),
 	}
 	if ds != nil {
 		dhtOpts = append(dhtOpts, dht.Datastore(ds))
 	}
-
 	return dualdht.New(ctx, h, dhtOpts...)
-
 }

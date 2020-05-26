@@ -38,16 +38,9 @@ var (
 
 // Config wraps configuration options for the Peer.
 type Config struct {
-	// The DAGService will not announce or retrieve blocks from the network
 	Offline bool
-	// ReprovideInterval sets how often to reprovide records to the DHT
-	ReprovideInterval time.Duration
-}
-
-func (cfg *Config) setDefaults() {
-	if cfg.ReprovideInterval <= 0 {
-		cfg.ReprovideInterval = defaultReprovideInterval
-	}
+	Root    string
+	Mtdt    map[string]interface{}
 }
 
 // Peer is an IPFS-Lite peer. It provides a DAG service that can fetch and put
@@ -81,8 +74,6 @@ func New(
 	if cfg == nil {
 		cfg = &Config{}
 	}
-
-	cfg.setDefaults()
 
 	p := &Peer{
 		ctx:   ctx,
@@ -129,9 +120,10 @@ func (p *Peer) setupBlockService() error {
 	}
 
 	scpModule, err := scp.NewScpModule(p.ctx, p.host, p.dht, scp.Params{
-		Root:     "",
-		DeviceID: "",
+		Root:     p.cfg.Root,
+		DeviceID: "lc_" + p.host.ID().Pretty(),
 		Role:     "light-client",
+		Mtdt:     p.cfg.Mtdt,
 	})
 	if err != nil {
 		return err
@@ -212,15 +204,4 @@ func (p *Peer) GetFile(ctx context.Context, c cid.Cid) (ufsio.ReadSeekCloser, er
 		return nil, err
 	}
 	return ufsio.NewDagReader(ctx, n, p)
-}
-
-// BlockStore offers access to the blockstore underlying the Peer's DAGService.
-func (p *Peer) BlockStore() blockstore.Blockstore {
-	return p.bstore
-}
-
-// HasBlock returns whether a given block is available locally. It is
-// a shorthand for .Blockstore().Has().
-func (p *Peer) HasBlock(c cid.Cid) (bool, error) {
-	return p.BlockStore().Has(c)
 }
