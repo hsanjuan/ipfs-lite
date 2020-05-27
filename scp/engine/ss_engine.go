@@ -406,7 +406,7 @@ func (e *Engine) GenerateMicroPayment(p peer.ID, blkLen int) {
 	msg := mppb.NewMicroPayment(
 		l.Invoice,
 		e.ssStore.BillingCycle(),
-		l.Partner,
+		l.DeviceId,
 		e.ssConf.RawMetadata(),
 	)
 	err := e.msgSigner.SignTxn(msg)
