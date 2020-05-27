@@ -57,6 +57,7 @@ type Peer struct {
 	ipld.DAGService // become a DAG service
 	bstore          blockstore.Blockstore
 	bserv           blockservice.BlockService
+	scpObj          *scp.Scp
 }
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
@@ -128,6 +129,7 @@ func (p *Peer) setupBlockService() error {
 	if err != nil {
 		return err
 	}
+	p.scpObj = scpModule
 	bswap := bitswap.New(p.ctx, scpModule, p.bstore)
 	p.bserv = blockservice.New(p.bstore, bswap)
 	return nil
@@ -136,6 +138,27 @@ func (p *Peer) setupBlockService() error {
 func (p *Peer) setupDAGService() error {
 	p.DAGService = merkledag.NewDAGService(p.bserv)
 	return nil
+}
+
+func (p *Peer) WaitToComplete(timeout time.Duration) <-chan bool {
+	start := time.Now()
+	doneChan := make(chan bool)
+	go func() {
+		for {
+			if p.scpObj.OutstandingMps() <= 0 {
+				logger.Info("Posting micropayments complete")
+				break
+			}
+			logger.Info("Found outstanding micropayments %d", p.scpObj.OutstandingMps())
+			if time.Since(start) > timeout {
+				logger.Warn("Timed out waiting for SCP to complete")
+				break
+			}
+			<-time.After(time.Millisecond * 500)
+		}
+		doneChan <- true
+	}()
+	return doneChan
 }
 
 func (p *Peer) autoclose() {

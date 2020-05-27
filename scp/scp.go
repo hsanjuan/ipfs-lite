@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	ssConf "github.com/StreamSpace/ss-light-client/scp/config"
@@ -53,10 +54,11 @@ type Scp struct {
 	bsnet.BitSwapNetwork
 	bsnet.Receiver
 
-	h          host.Host
-	engine     *engine.Engine
-	stat       *stats
-	workerStop context.CancelFunc
+	h              host.Host
+	engine         *engine.Engine
+	stat           *stats
+	workerStop     context.CancelFunc
+	outstandingMps int32
 }
 
 func NewScp(
@@ -79,6 +81,10 @@ func NewScp(
 	s.h.SetStreamHandler(message.MicropaymentProto, s.handleScpStream)
 	go s.taskWorker(ctx, 1)
 	return s
+}
+
+func (s *Scp) OutstandingMps() int32 {
+	return s.outstandingMps
 }
 
 func (s *Scp) SetDelegate(r bsnet.Receiver) {
@@ -127,6 +133,7 @@ func (s *Scp) ReceiveMessage(
 		s.engine.GenerateMicroPayment(sender, totalLen)
 		s.engine.ReceivedFrom(sender, uint64(len(blks)), uint64(totalLen))
 		s.stat.blksReceived(len(blks), totalLen)
+		_ = atomic.AddInt32(&s.outstandingMps, 1)
 	}
 }
 
@@ -246,6 +253,9 @@ func (s *Scp) sendMsg(ctx context.Context, env *engine.Envelope) {
 		return
 	}
 	s.stat.sent(env.Message)
+	if env.Message.ID() == message.MicropaymentProto {
+		_ = atomic.AddInt32(&s.outstandingMps, -1)
+	}
 	log.Debugf("sent SCP message %s to %s", env.Message.ID(), env.Peer)
 }
 

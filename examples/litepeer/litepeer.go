@@ -149,6 +149,41 @@ Options:
 	os.Exit(1)
 }
 
+func updateInfo(i *info) error {
+	args := map[string]interface{}{
+		"val": combineArgs(
+			CmdSeparator,
+			"streamspace",
+			"customer",
+			"complete",
+			i.Cookie.ID,
+			"-j",
+		),
+	}
+	buf, err := json.Marshal(args)
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(ApiAddr, "application/json", bytes.NewReader(buf))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	respBuf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	respData := map[string]interface{}{}
+	err = json.Unmarshal(respBuf, &respData)
+	if err != nil {
+		return err
+	}
+	if respData["status"] != 200 {
+		return errors.New(respData["details"].(string))
+	}
+	return nil
+}
+
 func main() {
 	flag.Parse()
 
@@ -242,7 +277,13 @@ func main() {
 		returnError("Internal reason: "+err.Error(), false)
 	}
 
+	<-lite.WaitToComplete(time.Second * 10)
+
+	err = updateInfo(metadata)
+	if err != nil {
+		returnError("Internal reason: "+err.Error(), false)
+	}
+
 	fmt.Println("Download complete")
-	<-time.After(time.Second * 10)
 	return
 }
