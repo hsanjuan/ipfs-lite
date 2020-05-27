@@ -28,7 +28,7 @@ const (
 	RepoBase     string = ".ss_light"
 	FpSeparator  string = string(os.PathSeparator)
 	CmdSeparator string = "%$#"
-	ApiAddr      string = "http://localhost:4343/v3/execute"
+	ApiAddr      string = "http://bootstrap1.stream.space:4343/v3/execute"
 )
 
 // Command arguments
