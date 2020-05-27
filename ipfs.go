@@ -38,9 +38,10 @@ var (
 
 // Config wraps configuration options for the Peer.
 type Config struct {
-	Offline bool
-	Root    string
-	Mtdt    map[string]interface{}
+	Offline    bool
+	EnableLogs bool
+	Root       string
+	Mtdt       map[string]interface{}
 }
 
 // Peer is an IPFS-Lite peer. It provides a DAG service that can fetch and put
@@ -57,7 +58,6 @@ type Peer struct {
 	ipld.DAGService // become a DAG service
 	bstore          blockstore.Blockstore
 	bserv           blockservice.BlockService
-	scpObj          *scp.Scp
 }
 
 // New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
@@ -75,7 +75,9 @@ func New(
 	if cfg == nil {
 		cfg = &Config{}
 	}
-	logging.SetLogLevel("*", "Debug")
+	if cfg.EnableLogs {
+		logging.SetLogLevel("*", "Debug")
+	}
 	p := &Peer{
 		ctx:   ctx,
 		cfg:   cfg,
@@ -129,7 +131,6 @@ func (p *Peer) setupBlockService() error {
 	if err != nil {
 		return err
 	}
-	p.scpObj = scpModule
 	bswap := bitswap.New(p.ctx, scpModule, p.bstore)
 	p.bserv = blockservice.New(p.bstore, bswap)
 	return nil
@@ -138,27 +139,6 @@ func (p *Peer) setupBlockService() error {
 func (p *Peer) setupDAGService() error {
 	p.DAGService = merkledag.NewDAGService(p.bserv)
 	return nil
-}
-
-func (p *Peer) WaitToComplete(timeout time.Duration) <-chan bool {
-	start := time.Now()
-	doneChan := make(chan bool)
-	go func() {
-		for {
-			if p.scpObj.OutstandingMps() <= 0 {
-				logger.Info("Posting micropayments complete")
-				break
-			}
-			logger.Info("Found outstanding micropayments %d", p.scpObj.OutstandingMps())
-			if time.Since(start) > timeout {
-				logger.Warn("Timed out waiting for SCP to complete")
-				break
-			}
-			<-time.After(time.Millisecond * 500)
-		}
-		doneChan <- true
-	}()
-	return doneChan
 }
 
 func (p *Peer) autoclose() {

@@ -38,6 +38,7 @@ var (
 	sharable    = flag.String("sharable", "", "Sharable string provided for file")
 	timeout     = flag.String("timeout", "15m", "Timeout duration")
 	onlyInfo    = flag.Bool("info", false, "Get only fetch info")
+	enableLog   = flag.Bool("logToStderr", false, "Enable app logs on stderr")
 )
 
 // API objects
@@ -173,13 +174,10 @@ func updateInfo(i *info) error {
 	if err != nil {
 		return err
 	}
-	respData := map[string]interface{}{}
+	respData := &apiResp{}
 	err = json.Unmarshal(respBuf, &respData)
-	if err != nil {
+	if err != nil && respData.Status != 200 {
 		return err
-	}
-	if respData["status"] != 200 {
-		return errors.New(respData["details"].(string))
 	}
 	return nil
 }
@@ -244,7 +242,8 @@ func main() {
 	)
 
 	cfg := &ipfslite.Config{
-		Root: combineArgs(FpSeparator, *repo, RepoBase),
+		EnableLogs: *enableLog,
+		Root:       combineArgs(FpSeparator, *repo, RepoBase),
 		Mtdt: map[string]interface{}{
 			"download_index": strconv.Itoa(metadata.Cookie.DownloadIdx),
 		},
@@ -277,7 +276,8 @@ func main() {
 		returnError("Internal reason: "+err.Error(), false)
 	}
 
-	<-lite.WaitToComplete(time.Second * 10)
+	// Wait 5 secs for SCP to send all MPs. This can be optimized
+	<-time.After(time.Second * 5)
 
 	err = updateInfo(metadata)
 	if err != nil {
