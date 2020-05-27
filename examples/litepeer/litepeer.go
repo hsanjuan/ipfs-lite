@@ -10,8 +10,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	_ "net/http"
+	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	ipfslite "github.com/StreamSpace/ss-light-client"
@@ -26,14 +27,14 @@ import (
 const (
 	RepoBase     string = ".ss_light"
 	FpSeparator  string = string(os.PathSeparator)
-	CmdSeparator string = "#$%"
-	ApiAddr      string = "http://bootstraps.stream.space/v3/execute"
+	CmdSeparator string = "%$#"
+	ApiAddr      string = "http://localhost:4343/v3/execute"
 )
 
 // Command arguments
 var (
 	repo        = flag.String("repo", ".", "Path for storing intermediate data")
-	destination = flag.String("dst", "~/Downloads/", "Path to store downloaded file")
+	destination = flag.String("dst", ".", "Path to store downloaded file")
 	sharable    = flag.String("sharable", "", "Sharable string provided for file")
 	timeout     = flag.String("timeout", "15m", "Timeout duration")
 	onlyInfo    = flag.Bool("info", false, "Get only fetch info")
@@ -44,9 +45,9 @@ type cookie struct {
 	ID          string          `json:"id"`
 	Count       int             `json:"count"`
 	Leaders     []peer.AddrInfo `json:"leaders"`
-	DownloadIdx string          `json:"downloadindex"`
+	DownloadIdx int             `json:"downloadindex"`
 	Filename    string          `json:"filename"`
-	Filehash    string          `json:"filehash"`
+	Filehash    string          `json:"hash"`
 }
 
 type info struct {
@@ -62,12 +63,17 @@ type apiResp struct {
 }
 
 func (a *apiResp) UnmarshalJSON(b []byte) error {
+	val := map[string]string{}
 	tmp := struct {
 		Status  int             `json:"status"`
 		Details string          `json:"details"`
 		Data    json.RawMessage `json:"data"`
 	}{}
-	err := json.Unmarshal(b, &tmp)
+	err := json.Unmarshal(b, &val)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(val["val"]), &tmp)
 	if err != nil {
 		return err
 	}
@@ -95,26 +101,29 @@ func combineArgs(separator string, args ...string) (retPath string) {
 func getInfo(sharable string, pubKey crypto.PubKey) (*info, error) {
 	pubKB, _ := pubKey.Bytes()
 	args := map[string]interface{}{
-		"args": combineArgs(
+		"val": combineArgs(
 			CmdSeparator,
+			"streamspace",
+			"customer",
+			"fetch",
 			sharable,
-			"--public-key "+base64.StdEncoding.EncodeToString(pubKB),
+			"--public-key",
+			base64.StdEncoding.EncodeToString(pubKB),
+			"--source-ip",
+			"10.10.10.1",
+			"-j",
 		),
 	}
-	_, err := json.Marshal(args)
+	buf, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
 	}
-	// resp, err := http.Post(ApiAddr, "application/json", bytes.NewReader(buf))
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer resp.Body.Close()
-	f, err := os.Open("example2.json")
+	resp, err := http.Post(ApiAddr, "application/json", bytes.NewReader(buf))
 	if err != nil {
 		return nil, err
 	}
-	respBuf, err := ioutil.ReadAll(f)
+	defer resp.Body.Close()
+	respBuf, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +197,7 @@ func main() {
 		returnError("Internal reason: "+err.Error(), false)
 	}
 
-	listen, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/4342")
+	listen, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/45000")
 
 	h, dht, err := ipfslite.SetupLibp2p(
 		ctx,
@@ -202,7 +211,7 @@ func main() {
 	cfg := &ipfslite.Config{
 		Root: combineArgs(FpSeparator, *repo, RepoBase),
 		Mtdt: map[string]interface{}{
-			"download_index": metadata.Cookie.DownloadIdx,
+			"download_index": strconv.Itoa(metadata.Cookie.DownloadIdx),
 		},
 	}
 
@@ -233,5 +242,7 @@ func main() {
 		returnError("Internal reason: "+err.Error(), false)
 	}
 
+	fmt.Println("Download complete")
+	<-time.After(time.Second * 10)
 	return
 }

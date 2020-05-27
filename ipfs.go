@@ -74,7 +74,7 @@ func New(
 	if cfg == nil {
 		cfg = &Config{}
 	}
-
+	logging.SetLogLevel("*", "Debug")
 	p := &Peer{
 		ctx:   ctx,
 		cfg:   cfg,
