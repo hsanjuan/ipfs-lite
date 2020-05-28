@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/boltdb/bolt v1.3.1
+	github.com/glendc/go-external-ip v0.0.0-20170425150139-139229dcdddd
 	github.com/golang/protobuf v1.4.2
 	github.com/ipfs/go-bitswap v0.2.14
 	github.com/ipfs/go-blockservice v0.1.3

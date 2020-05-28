@@ -16,6 +16,7 @@ import (
 	"time"
 
 	ipfslite "github.com/StreamSpace/ss-light-client"
+	externalip "github.com/glendc/go-external-ip"
 	"github.com/ipfs/go-cid"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -99,6 +100,15 @@ func combineArgs(separator string, args ...string) (retPath string) {
 	return
 }
 
+func getExternalIp() string {
+	consensus := externalip.DefaultConsensus(nil, nil)
+	ip, err := consensus.ExternalIP()
+	if err != nil {
+		return "0.0.0.0"
+	}
+	return ip.String()
+}
+
 func getInfo(sharable string, pubKey crypto.PubKey) (*info, error) {
 	pubKB, _ := pubKey.Bytes()
 	args := map[string]interface{}{
@@ -111,7 +121,7 @@ func getInfo(sharable string, pubKey crypto.PubKey) (*info, error) {
 			"--public-key",
 			base64.StdEncoding.EncodeToString(pubKB),
 			"--source-ip",
-			"10.10.10.1",
+			getExternalIp(),
 			"-j",
 		),
 	}
