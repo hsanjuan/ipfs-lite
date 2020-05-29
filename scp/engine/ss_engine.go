@@ -16,7 +16,7 @@ import (
 	"github.com/StreamSpace/ss-light-client/scp/message"
 	hspb "github.com/StreamSpace/ss-light-client/scp/message/handshake"
 	mppb "github.com/StreamSpace/ss-light-client/scp/message/micropayment"
-	logging "github.com/ipfs/go-log"
+	logging "github.com/ipfs/go-log/v2"
 )
 
 var log = logging.Logger("ssEngine")
@@ -95,7 +95,7 @@ type Engine struct {
 
 func (e *Engine) defaultOpts() {
 	if e.ssConf == nil {
-		log.Warning("Streamspace configuration not provided. This will disable" +
+		log.Warn("Streamspace configuration not provided. This will disable" +
 			"certain features.")
 		e.ssStore = &lpb.DummyStore{}
 		e.ssConf = &dummyConf{}
@@ -127,7 +127,7 @@ func NewEngine(ctx context.Context, opts []Option) *Engine {
 	if e.ssStore == nil {
 		store, err := lpb.NewStore(e.ssConf.LedgerRoot())
 		if err != nil {
-			log.Warningf("Invalid SS Ledger root Err:%s Conf:%s.", err.Error(),
+			log.Warnf("Invalid SS Ledger root Err:%s Conf:%s.", err.Error(),
 				e.ssConf.String())
 			store = &lpb.DummyStore{}
 		}
@@ -360,14 +360,14 @@ func (e *Engine) HandleMicroPayment(p peer.ID, mp *mppb.MicropaymentMsg) {
 	if e.ssConf.Role() != INVALID {
 		if int64(mp.BillingCycle) != e.ssStore.BillingCycle() {
 			// Should not happen
-			log.Warningf("Got payment for different billing cycle "+
+			log.Warnf("Got payment for different billing cycle "+
 				"Exp:%d Curr:%d Msg:%s", e.ssStore.BillingCycle(), mp.BillingCycle,
 				mp.String())
 			return
 		}
 		if mp.Amount < l.Recvd {
 			// Could be an older payment. Do nothing.
-			log.Warning("Current received amount is less.")
+			log.Warn("Current received amount is less.")
 			return
 		}
 		if mp.Receiver != e.ssConf.DeviceId() {

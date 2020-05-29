@@ -10,7 +10,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	pb "github.com/golang/protobuf/proto"
-	logging "github.com/ipfs/go-log"
+	logging "github.com/ipfs/go-log/v2"
 )
 
 //go:generate protoc --proto_path=. --go_out=. ss_ledger.proto
