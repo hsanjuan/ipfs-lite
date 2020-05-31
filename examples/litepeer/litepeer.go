@@ -103,5 +103,5 @@ func (u *updateProgress) UpdateProgress(p int) {
 	} else {
 		u.started = true
 	}
-	fmt.Printf("Progress %d\n", p)
+	fmt.Printf("Progress %d%\n", p)
 }
