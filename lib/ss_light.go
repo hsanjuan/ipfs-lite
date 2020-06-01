@@ -18,6 +18,7 @@ import (
 	externalip "github.com/glendc/go-external-ip"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
+	syncds "github.com/ipfs/go-datastore/sync"
 	logger "github.com/ipfs/go-log/v2"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -196,7 +197,7 @@ func NewLightClient(
 		return nil, err
 	}
 
-	ds := datastore.NewMapDatastore()
+	ds := syncds.MutexWrap(datastore.NewMapDatastore())
 
 	to, err := time.ParseDuration(timeout)
 	if err != nil {

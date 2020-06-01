@@ -81,15 +81,22 @@ func main() {
 	if err != nil {
 		returnError("Failed setting up client reason:"+err.Error(), true)
 	}
-	upd := &updateProgress{}
-	if *onlyInfo || !*showProg {
-		upd = nil
+	var upd lib.ProgressUpdater
+	upd = &noopProgress{}
+	if !*onlyInfo && *showProg {
+		upd = &updateProgress{}
 	}
 	status, err := lc.Start(*sharable, *onlyInfo, upd)
 	if err != nil {
 		returnError(status+" reason:"+err.Error(), false)
 	}
-	fmt.Printf(status)
+	fmt.Println(status)
+	return
+}
+
+type noopProgress struct{}
+
+func (u *noopProgress) UpdateProgress(p int) {
 	return
 }
 
@@ -103,5 +110,5 @@ func (u *updateProgress) UpdateProgress(p int) {
 	} else {
 		u.started = true
 	}
-	fmt.Printf("Progress %d%\n", p)
+	fmt.Printf("Progress %d%%\n", p)
 }
