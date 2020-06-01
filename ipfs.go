@@ -125,7 +125,7 @@ func (p *Peer) setupBlockService() error {
 	if err != nil {
 		return err
 	}
-	bswap := bitswap.New(p.ctx, scpModule, p.bstore)
+	bswap := bitswap.New(p.ctx, scpModule, p.bstore, bitswap.ProvideEnabled(false))
 	p.bserv = blockservice.New(p.bstore, bswap)
 	return nil
 }
