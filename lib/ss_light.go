@@ -187,7 +187,6 @@ type LightClient struct {
 
 func NewLightClient(
 	destination string,
-	repoRoot string,
 	timeout string,
 ) (*LightClient, error) {
 
@@ -207,7 +206,6 @@ func NewLightClient(
 
 	return &LightClient{
 		destination: destination,
-		repoRoot:    repoRoot,
 		timeout:     to,
 		privKey:     priv,
 		pubKey:      pubk,
@@ -267,7 +265,6 @@ func (l *LightClient) Start(
 	}
 
 	cfg := &ipfslite.Config{
-		Root: combineArgs(fpSeparator, l.repoRoot, repoBase),
 		Mtdt: map[string]interface{}{
 			"download_index": strconv.Itoa(metadata.Cookie.DownloadIdx),
 		},

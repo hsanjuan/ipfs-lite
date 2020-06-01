@@ -13,7 +13,6 @@ import (
 
 // Command arguments
 var (
-	repo        = flag.String("repo", ".", "Path for storing intermediate data")
 	destination = flag.String("dst", ".", "Path to store downloaded file")
 	sharable    = flag.String("sharable", "", "Sharable string provided for file")
 	timeout     = flag.String("timeout", "15m", "Timeout duration")
@@ -77,7 +76,7 @@ func main() {
 	if len(*sharable) == 0 {
 		returnError("Sharable string not provided", true)
 	}
-	lc, err := lib.NewLightClient(*destination, *repo, *timeout)
+	lc, err := lib.NewLightClient(*destination, *timeout)
 	if err != nil {
 		returnError("Failed setting up client reason:"+err.Error(), true)
 	}

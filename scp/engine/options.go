@@ -47,7 +47,6 @@ type SSConfig interface {
 	UserId() peer.ID
 	DeviceId() string
 	Role() string
-	LedgerRoot() string
 	Epoch() time.Time
 	Cycle() time.Duration
 	Rate() float64
@@ -65,8 +64,6 @@ func (d *dummyConf) UserId() peer.ID { return "dummy" }
 func (d *dummyConf) DeviceId() string { return "dummy" }
 
 func (d *dummyConf) Role() string { return INVALID }
-
-func (d *dummyConf) LedgerRoot() string { return INVALID }
 
 func (d *dummyConf) Epoch() time.Time { return time.Now() }
 
@@ -97,6 +94,12 @@ func WithSignVerifier(sv SignatureVerifier) Option {
 }
 
 func WithSSConfig(conf SSConfig) Option {
+	return func(e *Engine) {
+		e.ssConf = conf
+	}
+}
+
+func WithLedgerStore(conf SSConfig) Option {
 	return func(e *Engine) {
 		e.ssConf = conf
 	}

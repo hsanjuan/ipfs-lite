@@ -40,7 +40,6 @@ var (
 type Config struct {
 	Offline    bool
 	EnableLogs bool
-	Root       string
 	Mtdt       map[string]interface{}
 }
 
@@ -119,7 +118,6 @@ func (p *Peer) setupBlockService() error {
 	}
 
 	scpModule, err := scp.NewScpModule(p.ctx, p.host, p.dht, scp.Params{
-		Root:     p.cfg.Root,
 		DeviceID: "lc_" + p.host.ID().Pretty(),
 		Role:     "light-client",
 		Mtdt:     p.cfg.Mtdt,
