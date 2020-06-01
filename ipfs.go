@@ -108,11 +108,7 @@ func New(
 func (p *Peer) setupBlockstore() error {
 	bs := blockstore.NewBlockstore(p.store)
 	bs = blockstore.NewIdStore(bs)
-	cachedbs, err := blockstore.CachedBlockstore(p.ctx, bs, blockstore.DefaultCacheOpts())
-	if err != nil {
-		return err
-	}
-	p.bstore = cachedbs
+	p.bstore = bs
 	return nil
 }
 

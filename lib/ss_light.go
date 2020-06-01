@@ -196,11 +196,7 @@ func NewLightClient(
 		return nil, err
 	}
 
-	ds, err := ipfslite.BadgerDatastore(combineArgs(fpSeparator, repoRoot, repoBase))
-	if err != nil {
-		log.Errorf("Failed creating datastore Err:%s", err.Error())
-		return nil, err
-	}
+	ds := datastore.NewMapDatastore()
 
 	to, err := time.ParseDuration(timeout)
 	if err != nil {

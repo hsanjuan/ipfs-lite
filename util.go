@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/ipfs/go-datastore"
-	badger "github.com/ipfs/go-ds-badger"
 	ipns "github.com/ipfs/go-ipns"
 	"github.com/libp2p/go-libp2p"
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
@@ -17,8 +16,6 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	record "github.com/libp2p/go-libp2p-record"
-	secio "github.com/libp2p/go-libp2p-secio"
-	libp2ptls "github.com/libp2p/go-libp2p-tls"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -28,24 +25,12 @@ func DefaultBootstrapPeers() []peer.AddrInfo {
 	return []peer.AddrInfo{}
 }
 
-// BadgerDatastore returns a new instance of Badger-DS persisting
-// to the given path with the default options.
-func BadgerDatastore(path string) (datastore.Batching, error) {
-	return badger.NewDatastore(path, &badger.DefaultOptions)
-}
-
 // Libp2pOptionsExtra provides some useful libp2p options
 // to create a fully featured libp2p host. It can be used with
 // SetupLibp2p.
 var Libp2pOptionsExtra = []libp2p.Option{
-	libp2p.NATPortMap(),
 	libp2p.ConnectionManager(connmgr.NewConnManager(100, 600, time.Minute)),
 	libp2p.EnableAutoRelay(),
-	libp2p.EnableNATService(),
-	libp2p.Security(libp2ptls.ID, libp2ptls.New),
-	libp2p.Security(secio.ID, secio.New),
-	// TODO: re-enable when QUIC support private networks.
-	// libp2p.Transport(libp2pquic.NewTransport),
 	libp2p.DefaultTransports,
 }
 
