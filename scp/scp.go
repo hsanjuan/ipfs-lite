@@ -12,7 +12,7 @@ import (
 	"github.com/StreamSpace/ss-light-client/scp/message"
 	bsmsg "github.com/ipfs/go-bitswap/message"
 	bsnet "github.com/ipfs/go-bitswap/network"
-	logging "github.com/ipfs/go-log"
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/helpers"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
@@ -22,7 +22,6 @@ import (
 )
 
 type Params struct {
-	Root     string
 	DeviceID string
 	Role     string
 	Mtdt     map[string]interface{}
@@ -34,7 +33,7 @@ func NewScpModule(
 	r routing.Routing,
 	params Params,
 ) (*Scp, error) {
-	cfg, err := ssConf.New(h, params.Root, params.DeviceID, params.Role, params.Mtdt)
+	cfg, err := ssConf.New(h, params.DeviceID, params.Role, params.Mtdt)
 	if err != nil {
 		return nil, err
 	}

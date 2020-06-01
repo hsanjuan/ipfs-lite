@@ -1,5 +1,0 @@
-{
-   "status": 500,
-   "message": "Could not fetch",
-   "details": "invalid character 'e' looking for beginning of object key string"
-}

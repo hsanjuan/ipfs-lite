@@ -40,7 +40,6 @@ var (
 type Config struct {
 	Offline    bool
 	EnableLogs bool
-	Root       string
 	Mtdt       map[string]interface{}
 }
 
@@ -108,11 +107,7 @@ func New(
 func (p *Peer) setupBlockstore() error {
 	bs := blockstore.NewBlockstore(p.store)
 	bs = blockstore.NewIdStore(bs)
-	cachedbs, err := blockstore.CachedBlockstore(p.ctx, bs, blockstore.DefaultCacheOpts())
-	if err != nil {
-		return err
-	}
-	p.bstore = cachedbs
+	p.bstore = bs
 	return nil
 }
 
@@ -123,7 +118,6 @@ func (p *Peer) setupBlockService() error {
 	}
 
 	scpModule, err := scp.NewScpModule(p.ctx, p.host, p.dht, scp.Params{
-		Root:     p.cfg.Root,
 		DeviceID: "lc_" + p.host.ID().Pretty(),
 		Role:     "light-client",
 		Mtdt:     p.cfg.Mtdt,
@@ -151,7 +145,7 @@ func (p *Peer) autoclose() {
 // logged and a warning is printed when less than half of the given peers
 // could be contacted. It is fine to pass a list where some peers will not be
 // reachable.
-func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
+func (p *Peer) Bootstrap(peers []peer.AddrInfo) int {
 	connected := make(chan struct{})
 
 	var wg sync.WaitGroup
@@ -186,8 +180,9 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
 	err := p.dht.Bootstrap(p.ctx)
 	if err != nil {
 		logger.Error(err)
-		return
+		return 0
 	}
+	return i
 }
 
 // Session returns a session-based NodeGetter.
@@ -201,7 +196,7 @@ func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
 
 // GetFile returns a reader to a file as identified by its root CID. The file
 // must have been added as a UnixFS DAG (default for IPFS).
-func (p *Peer) GetFile(ctx context.Context, c cid.Cid) (ufsio.ReadSeekCloser, error) {
+func (p *Peer) GetFile(ctx context.Context, c cid.Cid) (ufsio.DagReader, error) {
 	n, err := p.Get(ctx, c)
 	if err != nil {
 		return nil, err

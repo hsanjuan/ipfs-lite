@@ -1,45 +1,18 @@
 package ss_ledger
 
 import (
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/boltdb/bolt"
 	pb "github.com/golang/protobuf/proto"
-	logging "github.com/ipfs/go-log"
+	logging "github.com/ipfs/go-log/v2"
 )
 
 //go:generate protoc --proto_path=. --go_out=. ss_ledger.proto
 
 var log = logging.Logger("ss_ledger")
-
-const (
-	BUCKET string = "Main"
-)
-
-var storeName = func(cycle int) string {
-	return ".ssLedgerStore_" + strconv.Itoa(cycle) + ".DB"
-}
-
-var storePath = func(root string, cycle int) string {
-	return fmt.Sprintf(storeFmt(root), cycle)
-}
-
-var pendingPath = func(root string, cycle int) string {
-	return fmt.Sprintf(pendingFmt(root), cycle)
-}
-
-var storeFmt = func(root string) string {
-	return root + string(os.PathSeparator) + ".ssLedgerStore_%d.DB"
-}
-
-var pendingFmt = func(root string) string {
-	return root + string(os.PathSeparator) + ".ssLedgerStore_%d.DB.pending"
-}
 
 func prettyPrintTxn(txnHash string) string {
 	if len(txnHash) == 0 {
@@ -118,244 +91,154 @@ func (s *DummyStore) Close() error {
 }
 
 type ssLedgerStore struct {
-	rootPath  string
 	currCycle int64
-	dbP       *bolt.DB
-	lk        sync.Mutex
+	cycleMtx  sync.Mutex
+	ledgers   sync.Map
 }
 
-func NewStore(rootPath string) (Store, error) {
-	store := new(ssLedgerStore)
-
-	if _, e := os.Stat(rootPath); e != nil {
-		return nil, e
+func NewMapLedgerStore() Store {
+	return &ssLedgerStore{
+		currCycle: 1,
 	}
-
-	// Currently we will do a best effort to figure out the billing cycle
-	// if there are no cycles present, we will initialize with cycle no 1
-	currCycle := 1
-	_ = filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
-		if path == rootPath {
-			return filepath.SkipDir
-		}
-		var cycle int
-		if _, e := fmt.Sscanf(path, storeFmt(rootPath), &cycle); e == nil {
-			if cycle > currCycle {
-				currCycle = cycle
-			}
-		} else {
-			log.Errorf("Path not a DB %s Root: %s Error:%s", path, rootPath, e.Error())
-		}
-		return nil
-	})
-	log.Debugf("Found current cycle %d", currCycle)
-
-	store.rootPath = rootPath
-	store.currCycle = int64(currCycle)
-	e := store.createDB()
-	if e != nil {
-		return nil, e
-	}
-	return store, nil
 }
 
-func newPendingStore(rootPath string, cycle int64) (Store, error) {
-	fullName := pendingPath(rootPath, int(cycle))
-	db, e := bolt.Open(fullName, 0600, nil)
-	if e != nil {
-		return nil, e
-	}
-	return &ssLedgerStore{rootPath: rootPath, currCycle: cycle, dbP: db}, nil
+func (s *ssLedgerStore) getKey(p string) string {
+	return s.prefix(s.currCycle) + p
 }
 
-func (s *ssLedgerStore) createDB() error {
-	s.lk.Lock()
-	defer s.lk.Unlock()
+func (s *ssLedgerStore) prefix(cycle int64) string {
+	return fmt.Sprintf("%d_", s.currCycle)
+}
 
-	fullName := storePath(s.rootPath, int(s.currCycle))
-	db, e := bolt.Open(fullName, 0600, nil)
-	if e != nil {
-		return e
+func copyLedger(a, b *SSLedger) error {
+	buf, err := pb.Marshal(a)
+	if err != nil {
+		return err
 	}
-
-	if s.dbP != nil {
-		s.dbP.Close()
-	}
-
-	s.dbP = db
-	return nil
+	return pb.Unmarshal(buf, b)
 }
 
 func (s *ssLedgerStore) Get(val *SSLedger) error {
-	s.lk.Lock()
+	s.cycleMtx.Lock()
+	defer s.cycleMtx.Unlock()
 
-	err := s.dbP.View(func(tx *bolt.Tx) error {
-		bkt := tx.Bucket([]byte(BUCKET))
-		if bkt == nil {
-			return bolt.ErrBucketNotFound
-		}
-
-		buf := bkt.Get([]byte(val.Partner))
-		if buf != nil {
-			err := pb.Unmarshal(buf, val)
-			return err
-		}
-
-		return bolt.ErrKeyRequired
-	})
-	s.lk.Unlock()
-	if err == bolt.ErrBucketNotFound {
-		err = s.Store(val)
+	mVal, ok := s.ledgers.Load(s.getKey(val.Partner))
+	if !ok {
+		return errors.New("Key not found")
 	}
-	return err
+	pVal, ok := mVal.(*SSLedger)
+	if !ok {
+		return errors.New("Invalid type")
+	}
+	return copyLedger(pVal, val)
 }
 
 func (s *ssLedgerStore) Store(val *SSLedger) error {
-	s.lk.Lock()
-	defer s.lk.Unlock()
-
-	return s.dbP.Update(func(tx *bolt.Tx) error {
-
-		bkt, err := tx.CreateBucketIfNotExists([]byte(BUCKET))
-		if err != nil {
-			return err
-		}
-
-		buf, err := pb.Marshal(val)
-		if err != nil {
-			return err
-		}
-
-		err = bkt.Put([]byte(val.Partner), buf)
-		return err
-	})
+	s.cycleMtx.Lock()
+	defer s.cycleMtx.Unlock()
+	l := new(SSLedger)
+	copyLedger(val, l)
+	s.ledgers.Store(s.getKey(val.Partner), l)
+	return nil
 }
 
 func (s *ssLedgerStore) List() ([]*SSLedger, error) {
-	s.lk.Lock()
-	defer s.lk.Unlock()
-
+	s.cycleMtx.Lock()
+	defer s.cycleMtx.Unlock()
 	ledgers := make([]*SSLedger, 0)
 
-	err := s.dbP.View(func(tx *bolt.Tx) error {
-		bkt := tx.Bucket([]byte(BUCKET))
-		if bkt == nil {
-			return bolt.ErrBucketNotFound
-		}
-
-		c := bkt.Cursor()
-
-		for k, v := c.Last(); k != nil; k, v = c.Prev() {
+	s.ledgers.Range(func(key, val interface{}) bool {
+		if strings.HasPrefix(key.(string), s.prefix(s.currCycle)) {
 			l := new(SSLedger)
-			e := pb.Unmarshal(v, l)
-			if e != nil {
-				return e
+			if e := copyLedger(val.(*SSLedger), l); e == nil {
+				ledgers = append(ledgers, l)
 			}
-			log.Debugf("Read ledger %v", l.String())
-			ledgers = append(ledgers, l)
 		}
-		return nil
+		return true
 	})
-	return ledgers, err
+	return ledgers, nil
 }
 
 func (s *ssLedgerStore) Update(newCycle int64) error {
-	s.lk.Lock()
-	// Close existing DB if daemon is running
-	if s.dbP != nil {
-		s.dbP.Close()
+	s.cycleMtx.Lock()
+	defer s.cycleMtx.Unlock()
+	cycles, loaded := s.ledgers.Load("pending")
+	if loaded {
+		cycles = append(cycles.([]int64), s.currCycle)
+	} else {
+		cycles = []int64{s.currCycle}
 	}
-	// Move current DB to pending
-	err := os.Rename(storePath(s.rootPath, int(s.currCycle)),
-		pendingPath(s.rootPath, int(s.currCycle)))
-	if err != nil {
-		log.Errorf("Failed renaming old ledger %s Err:%s", storePath, err.Error())
-		// Ideally if we are not able to update the old ledger to pending
-		// we shouldnt end the billing cycle. See how to handle this better.
-		s.lk.Unlock()
-		return err
-	}
+	s.ledgers.Store("pending", cycles)
 	s.currCycle = newCycle
-	s.lk.Unlock()
-	return s.createDB()
+	return nil
 }
 
 func (s *ssLedgerStore) BillingCycle() int64 {
-	s.lk.Lock()
-	defer s.lk.Unlock()
+	s.cycleMtx.Lock()
+	defer s.cycleMtx.Unlock()
 	return s.currCycle
 }
 
 func (s *ssLedgerStore) Close() error {
-	s.lk.Lock()
-	defer s.lk.Unlock()
-	return s.dbP.Close()
+	return nil
 }
 
 func (s *ssLedgerStore) GetPending() (map[int][]*SSLedger, error) {
-	pendingStores := make([]string, 0)
-	err := filepath.Walk(s.rootPath, func(path string, info os.FileInfo, err error) error {
-		if strings.Contains(path, ".pending") {
-			pendingStores = append(pendingStores, path)
+	s.cycleMtx.Lock()
+	defer s.cycleMtx.Unlock()
+
+	retVals := map[int][]*SSLedger{}
+	pending, loaded := s.ledgers.Load("pending")
+	if !loaded {
+		return retVals, nil
+	}
+	s.ledgers.Range(func(key, val interface{}) bool {
+		for _, v := range pending.([]int64) {
+			if strings.HasPrefix(key.(string), s.prefix(v)) {
+				rv, ok := retVals[int(v)]
+				if !ok {
+					rv = make([]*SSLedger, 0)
+				}
+				l := new(SSLedger)
+				if e := copyLedger(val.(*SSLedger), l); e == nil {
+					rv = append(rv, l)
+					retVals[int(v)] = rv
+				}
+			}
 		}
-		return nil
+		return true
 	})
-	if err != nil && len(pendingStores) == 0 {
-		log.Errorf("Failed listing any pending store files. Err:%s", err.Error())
-		return map[int][]*SSLedger{}, err
-	}
-	log.Debugf("Pending Stores %v", pendingStores)
-	if len(pendingStores) > 0 {
-		res := make(map[int][]*SSLedger)
-		for _, v := range pendingStores {
-			var billingCycle int
-			n, err := fmt.Sscanf(v, pendingFmt(s.rootPath), &billingCycle)
-			if err != nil || n != 1 {
-				log.Errorf("Failed parsing pending store name %s Err:%v n:%d", v, err, n)
-				continue
-			}
-			st, err := newPendingStore(s.rootPath, int64(billingCycle))
-			if err != nil {
-				log.Errorf("Failed creating pending store object Err:%s", err.Error())
-				continue
-			}
-			list, err := st.List()
-			// This is best effort. If there is an issue on listing we
-			// just dont add it. This happens for the 1st cycle.
-			if err == nil {
-				res[billingCycle] = list
-			}
-			st.Close()
-		}
-		return res, nil
-	}
-	return map[int][]*SSLedger{}, nil
+	return retVals, nil
 }
 
 func (s *ssLedgerStore) ClearPending(cycles []int) ([]int, error) {
-	pendingStores := make([]string, 0)
-	if len(cycles) == 0 {
-		err := filepath.Walk(s.rootPath, func(path string, info os.FileInfo, err error) error {
-			if strings.Contains(path, ".pending") {
-				pendingStores = append(pendingStores, path)
-			}
-			return nil
-		})
-		if err != nil {
-			log.Errorf("Failed listing pending store files. Err:%s", err.Error())
-			return []int{}, err
-		}
-	} else {
+	s.cycleMtx.Lock()
+	defer s.cycleMtx.Unlock()
+
+	keysToDelete := []string{}
+	s.ledgers.Range(func(key, val interface{}) bool {
 		for _, v := range cycles {
-			pendingStores = append(pendingStores, pendingPath(s.rootPath, v))
+			if strings.HasPrefix(key.(string), s.prefix(int64(v))) {
+				keysToDelete = append(keysToDelete, key.(string))
+			}
+		}
+		return true
+	})
+	cleared := []int{}
+	pending, loaded := s.ledgers.Load("pending")
+	if loaded {
+		for _, c := range cycles {
+			for idx, p := range pending.([]int64) {
+				if int64(c) == p {
+					pending = append(pending.([]int64)[:idx], pending.([]int64)[idx:]...)
+					cleared = append(cleared, c)
+					break
+				}
+			}
 		}
 	}
-	log.Debugf("List of pending stores to clear %v", pendingStores)
-	res := make([]int, len(pendingStores))
-	for i, v := range pendingStores {
-		_ = os.Remove(v)
-		_, _ = fmt.Sscanf(v, pendingFmt(s.rootPath), &res[i])
+	for _, k := range keysToDelete {
+		s.ledgers.Delete(k)
 	}
-	log.Debugf("Result of ClearPending %v", res)
-	return res, nil
+	return cleared, nil
 }
