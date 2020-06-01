@@ -100,6 +100,9 @@ func (e *Engine) defaultOpts() {
 		e.ssStore = &lpb.DummyStore{}
 		e.ssConf = &dummyConf{}
 	}
+	if e.ssStore == nil {
+		e.ssStore = lpb.NewMapLedgerStore()
+	}
 	if e.msgSigner == nil {
 		e.msgSigner = &dummyMessageSigner{}
 	}
@@ -124,15 +127,6 @@ func NewEngine(ctx context.Context, opts []Option) *Engine {
 		opt(e)
 	}
 	e.defaultOpts()
-	if e.ssStore == nil {
-		store, err := lpb.NewStore(e.ssConf.LedgerRoot())
-		if err != nil {
-			log.Warnf("Invalid SS Ledger root Err:%s Conf:%s.", err.Error(),
-				e.ssConf.String())
-			store = &lpb.DummyStore{}
-		}
-		e.ssStore = store
-	}
 	e.peerRequestQueue = peertaskqueue.New(
 		peertaskqueue.TaskMerger(newTaskMerger()),
 		peertaskqueue.IgnoreFreezing(true),
