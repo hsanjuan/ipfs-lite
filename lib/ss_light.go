@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	ipfslite "github.com/StreamSpace/ss-light-client"
@@ -39,12 +38,12 @@ const (
 
 // API objects
 type cookie struct {
-	ID          string          `json:"id"`
-	Count       int             `json:"count"`
-	Leaders     []peer.AddrInfo `json:"leaders"`
-	DownloadIdx int             `json:"downloadindex"`
-	Filename    string          `json:"filename"`
-	Filehash    string          `json:"hash"`
+	Id            string
+	Leaders       []peer.AddrInfo
+	DownloadIndex string
+	Filename      string
+	Hash          string
+	Link          string
 }
 
 type info struct {
@@ -150,7 +149,7 @@ func updateInfo(i *info) error {
 			"streamspace",
 			"customer",
 			"complete",
-			i.Cookie.ID,
+			i.Cookie.Id,
 			"-j",
 		),
 	}
@@ -201,7 +200,7 @@ func NewLightClient(
 	to, err := time.ParseDuration(timeout)
 	if err != nil {
 		log.Warn("Invalid timeout duration specified. Using default 15m")
-		to = time.Minute * 15
+		to = time.Minute * 45
 	}
 
 	return &LightClient{
@@ -266,7 +265,7 @@ func (l *LightClient) Start(
 
 	cfg := &ipfslite.Config{
 		Mtdt: map[string]interface{}{
-			"download_index": strconv.Itoa(metadata.Cookie.DownloadIdx),
+			"download_index": metadata.Cookie.DownloadIndex,
 		},
 	}
 	lite, err := ipfslite.New(ctx, l.ds, h, dht, cfg)
@@ -283,17 +282,30 @@ func (l *LightClient) Start(
 				select {
 				case <-ctx.Done():
 					return
-				default:
+				case <-time.After(time.Second * 30):
+					// Allow 30 seconds to see if new leaders were added
 					newMtdt, err := getInfo(sharable, l.pubKey)
-					if err == nil && len(newMtdt.Cookie.Leaders) > 0 {
-						log.Infof("Got %d new leaders", len(newMtdt.Cookie.Leaders))
-						count += lite.Bootstrap(newMtdt.Cookie.Leaders)
+					if err == nil && len(newMtdt.Cookie.Leaders) > count {
+						log.Infof("Got %d new leaders", len(newMtdt.Cookie.Leaders)-count)
+						newLeadersToAdd := []peer.AddrInfo{}
+						for _, v := range newMtdt.Cookie.Leaders {
+							found := false
+							for _, x := range metadata.Cookie.Leaders {
+								if x.ID == v.ID {
+									found = true
+									break
+								}
+							}
+							if !found {
+								newLeadersToAdd = append(newLeadersToAdd, v)
+							}
+						}
+						count += lite.Bootstrap(newLeadersToAdd)
 					}
-					if time.Since(start) > time.Second*15 {
-						log.Warn("Tried getting more peers for 15secs")
+					if time.Since(start) > time.Minute*15 {
+						log.Warn("Tried getting more peers for 15mins")
 						return
 					}
-					<-time.After(time.Second)
 				}
 			}
 			log.Infof("Done lagged bootstrapping. New count %d", count)
@@ -316,7 +328,7 @@ func (l *LightClient) Start(
 	}
 	log.Infof("Connected to %d peers. Starting download", count)
 
-	c, err := cid.Decode(metadata.Cookie.Filehash)
+	c, err := cid.Decode(metadata.Cookie.Hash)
 	if err != nil {
 		log.Errorf("Failed decoding file hash Err: %s", err.Error())
 		return "Failed decoding filehash provided", err
