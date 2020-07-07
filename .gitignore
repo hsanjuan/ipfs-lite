@@ -10,3 +10,9 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Mac temp files
+.DS_Store
+
+# Zipped lib files
+*.tar.gz
