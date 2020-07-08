@@ -105,7 +105,7 @@ func getExternalIp() string {
 	return ip.String()
 }
 
-func getInfo(sharable string, pubKey crypto.PubKey) (*info, error) {
+func getInfo(sharable, oldCookie string, pubKey crypto.PubKey) (*info, error) {
 	pubKB, _ := pubKey.Bytes()
 	args := map[string]interface{}{
 		"val": combineArgs(
@@ -120,6 +120,14 @@ func getInfo(sharable string, pubKey crypto.PubKey) (*info, error) {
 			getExternalIp(),
 			"-j",
 		),
+	}
+	if len(oldCookie) > 0 {
+		args["val"] = combineArgs(
+			cmdSeparator,
+			args["val"].(string),
+			"--cookie",
+			oldCookie,
+		)
 	}
 	buf, err := json.Marshal(args)
 	if err != nil {
@@ -221,7 +229,7 @@ func (l *LightClient) Start(
 	onlyInfo bool,
 	progUpd ProgressUpdater,
 ) (string, error) {
-	metadata, err := getInfo(sharable, l.pubKey)
+	metadata, err := getInfo(sharable, "", l.pubKey)
 	if err != nil {
 		log.Errorf("Failed getting metadata Err: %s", err.Error())
 		return "Failed getting metadata", err
@@ -284,7 +292,7 @@ func (l *LightClient) Start(
 					return
 				case <-time.After(time.Second * 30):
 					// Allow 30 seconds to see if new leaders were added
-					newMtdt, err := getInfo(sharable, l.pubKey)
+					newMtdt, err := getInfo(sharable, metadata.Cookie.Id, l.pubKey)
 					if err == nil && len(newMtdt.Cookie.Leaders) > count {
 						log.Infof("Got %d new leaders", len(newMtdt.Cookie.Leaders)-count)
 						newLeadersToAdd := []peer.AddrInfo{}
