@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/glendc/go-external-ip v0.0.0-20170425150139-139229dcdddd
 	github.com/golang/protobuf v1.4.2
-	github.com/ipfs/go-bitswap v0.2.15
+	github.com/ipfs/go-bitswap v0.2.19
 	github.com/ipfs/go-blockservice v0.1.3
 	github.com/ipfs/go-cid v0.0.6
 	github.com/ipfs/go-datastore v0.4.4
@@ -19,10 +19,10 @@ require (
 	github.com/ipfs/go-merkledag v0.3.2
 	github.com/ipfs/go-peertaskqueue v0.2.0
 	github.com/ipfs/go-unixfs v0.2.4
-	github.com/libp2p/go-libp2p v0.9.2
-	github.com/libp2p/go-libp2p-connmgr v0.2.3
-	github.com/libp2p/go-libp2p-core v0.5.6
-	github.com/libp2p/go-libp2p-kad-dht v0.8.1
+	github.com/libp2p/go-libp2p v0.9.6
+	github.com/libp2p/go-libp2p-connmgr v0.2.4
+	github.com/libp2p/go-libp2p-core v0.5.7
+	github.com/libp2p/go-libp2p-kad-dht v0.8.2
 	github.com/libp2p/go-libp2p-record v0.1.3
 	github.com/libp2p/go-msgio v0.0.4
 	github.com/multiformats/go-multiaddr v0.2.2

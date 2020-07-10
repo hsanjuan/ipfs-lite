@@ -32,7 +32,7 @@ const (
 	repoBase      string = ".ss_light"
 	fpSeparator   string = string(os.PathSeparator)
 	cmdSeparator  string = "%$#"
-	apiAddr       string = "http://bootstrap1.stream.space:4343/v3/execute"
+	apiAddr       string = "http://bootstrap.swrmlabs.io:4343/v3/execute"
 	peerThreshold int    = 5
 )
 
