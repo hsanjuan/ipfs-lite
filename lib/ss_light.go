@@ -275,6 +275,7 @@ func (l *LightClient) Start(
 		Mtdt: map[string]interface{}{
 			"download_index": metadata.Cookie.DownloadIndex,
 		},
+		Rate: metadata.Rate,
 	}
 	lite, err := ipfslite.New(ctx, l.ds, h, dht, cfg)
 	if err != nil {

@@ -25,6 +25,7 @@ type Params struct {
 	DeviceID string
 	Role     string
 	Mtdt     map[string]interface{}
+	Rate     string
 }
 
 func NewScpModule(
@@ -33,7 +34,7 @@ func NewScpModule(
 	r routing.Routing,
 	params Params,
 ) (*Scp, error) {
-	cfg, err := ssConf.New(h, params.DeviceID, params.Role, params.Mtdt)
+	cfg, err := ssConf.New(h, params.DeviceID, params.Role, params.Mtdt, params.Rate)
 	if err != nil {
 		return nil, err
 	}

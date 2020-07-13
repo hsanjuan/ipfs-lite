@@ -41,6 +41,7 @@ type Config struct {
 	Offline    bool
 	EnableLogs bool
 	Mtdt       map[string]interface{}
+	Rate       string
 }
 
 // Peer is an IPFS-Lite peer. It provides a DAG service that can fetch and put

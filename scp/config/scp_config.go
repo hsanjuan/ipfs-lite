@@ -14,6 +14,7 @@ func New(
 	deviceId,
 	role string,
 	mtdt map[string]interface{},
+	rate string,
 ) (*ssConfig, error) {
 
 	ep, err := time.Parse(time.RFC3339, Epoch)
@@ -24,7 +25,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	rt, err := strconv.ParseFloat(Rate, 64)
+	rt, err := strconv.ParseFloat(rate, 64)
 	if err != nil {
 		return nil, err
 	}
