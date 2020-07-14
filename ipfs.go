@@ -122,6 +122,7 @@ func (p *Peer) setupBlockService() error {
 		DeviceID: "lc_" + p.host.ID().Pretty(),
 		Role:     "light-client",
 		Mtdt:     p.cfg.Mtdt,
+		Rate:     p.cfg.Rate,
 	})
 	if err != nil {
 		return err
