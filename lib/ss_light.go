@@ -32,7 +32,7 @@ const (
 	repoBase      string = ".ss_light"
 	fpSeparator   string = string(os.PathSeparator)
 	cmdSeparator  string = "%$#"
-	apiAddr       string = "http://bootstrap.swrmlabs.io:4343/v3/execute"
+	apiAddr       string = "http://bootstrap.swrmlabs.io/v3/execute"
 	peerThreshold int    = 5
 )
 
@@ -110,7 +110,7 @@ func getInfo(sharable, oldCookie string, pubKey crypto.PubKey) (*info, error) {
 	args := map[string]interface{}{
 		"val": combineArgs(
 			cmdSeparator,
-			"streamspace",
+			"hive",
 			"customer",
 			"fetch",
 			sharable,
@@ -154,7 +154,7 @@ func updateInfo(i *info) error {
 	args := map[string]interface{}{
 		"val": combineArgs(
 			cmdSeparator,
-			"streamspace",
+			"hive",
 			"customer",
 			"complete",
 			i.Cookie.Id,

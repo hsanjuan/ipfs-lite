@@ -16,3 +16,5 @@
 
 # Zipped lib files
 *.tar.gz
+
+.idea
