@@ -13,6 +13,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/StreamSpace/ss-light-client/scp/engine"
+
 	ipfslite "github.com/StreamSpace/ss-light-client"
 	externalip "github.com/glendc/go-external-ip"
 	"github.com/ipfs/go-cid"
@@ -44,6 +46,11 @@ type cookie struct {
 	Filename      string
 	Hash          string
 	Link          string
+}
+
+type StatOut struct {
+	ConnectedPeers []string            `json:"connected_peers"`
+	Ledgers        []*engine.SSReceipt `json:"ledgers"`
 }
 
 type info struct {
@@ -227,6 +234,7 @@ type ProgressUpdater interface {
 func (l *LightClient) Start(
 	sharable string,
 	onlyInfo bool,
+	stat bool,
 	progUpd ProgressUpdater,
 ) (string, error) {
 	metadata, err := getInfo(sharable, "", l.pubKey)
@@ -384,5 +392,24 @@ func (l *LightClient) Start(
 	if err != nil {
 		log.Warn("Failed updating metadata after download Err: %s", err.Error())
 	}
-	return "Download complete", nil
+	if !stat {
+		return "Download complete", nil
+	}
+
+	connectedPeerIds := lite.Host.Network().Peers()
+	connectedPeers := []string{}
+	for _, pID := range connectedPeerIds {
+		connectedPeers = append(connectedPeers, pID.String())
+	}
+
+	ledgers, _ := lite.Scp.GetMicroPayments()
+
+	out := StatOut{
+		ConnectedPeers: connectedPeers,
+		Ledgers:        ledgers,
+	}
+
+	b, _ := json.Marshal(out)
+
+	return string(b), nil
 }

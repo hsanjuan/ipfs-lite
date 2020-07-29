@@ -17,6 +17,7 @@ var (
 	sharable    = flag.String("sharable", "", "Sharable string provided for file")
 	timeout     = flag.String("timeout", "15m", "Timeout duration")
 	onlyInfo    = flag.Bool("info", false, "Get only fetch info")
+	stat        = flag.Bool("stat", false, "Get stat of the last fetch")
 	enableLog   = flag.Bool("logToStderr", false, "Enable app logs on stderr")
 	showProg    = flag.Bool("progress", false, "Enable progress on stdout")
 )
@@ -85,7 +86,7 @@ func main() {
 	if !*onlyInfo && *showProg {
 		upd = &updateProgress{}
 	}
-	status, err := lc.Start(*sharable, *onlyInfo, upd)
+	status, err := lc.Start(*sharable, *onlyInfo, *stat, upd)
 	if err != nil {
 		returnError(status+" reason:"+err.Error(), false)
 	}
