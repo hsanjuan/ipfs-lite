@@ -32,9 +32,9 @@ type Document struct {
 }
 
 type StatOut struct {
-	ConnectedPeers []string            `json:"connected_peers"`
-	Ledgers        []*engine.SSReceipt `json:"ledgers"`
-	Duration       time.Duration       `json:"duration"`
+	ConnectedPeers []string
+	Ledgers        []*engine.SSReceipt
+	Duration       time.Duration
 }
 
 func main() {
@@ -92,7 +92,6 @@ func main() {
 			if err != nil {
 				log.Fatal("command failed ", err.Error())
 			}
-
 			output := &StatOut{}
 			err = json.Unmarshal(out.Bytes(), output)
 			output.Duration = time.Now().Sub(start)
