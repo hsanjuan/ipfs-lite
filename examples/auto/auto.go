@@ -107,6 +107,10 @@ func main() {
 				log.Fatal("Failed to create document ", err)
 			}
 			fmt.Println(output)
+			err = os.Remove(fmt.Sprintf("%s", sharedObjects[randomIndex]["name"]))
+			if err != nil {
+				log.Fatalf("unable to remove file")
+			}
 		}
 	}
 }
