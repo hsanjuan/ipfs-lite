@@ -10,8 +10,6 @@ ENV SRC_DIR /ss-ipfs-lite
 ENV EXEC_DIR /ss-ipfs-lite/examples/litepeer/
 ENV AUTO_DIR /ss-ipfs-lite/examples/auto/
 
-ARG JOB=qa
-
 # Download packages first so they can be cached.
 COPY go.mod go.sum $SRC_DIR/
 RUN cd $SRC_DIR \

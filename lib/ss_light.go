@@ -395,21 +395,15 @@ func (l *LightClient) Start(
 	if !stat {
 		return "Download complete", nil
 	}
-
-	connectedPeerIds := lite.Host.Network().Peers()
 	connectedPeers := []string{}
-	for _, pID := range connectedPeerIds {
+	for _, pID := range lite.Host.Network().Peers() {
 		connectedPeers = append(connectedPeers, pID.String())
 	}
-
 	ledgers, _ := lite.Scp.GetMicroPayments()
-
 	out := StatOut{
 		ConnectedPeers: connectedPeers,
 		Ledgers:        ledgers,
 	}
-
 	b, _ := json.Marshal(out)
-
 	return string(b), nil
 }

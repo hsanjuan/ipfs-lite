@@ -17,8 +17,6 @@ import (
 	"github.com/StreamSpace/ss-light-client/scp/engine"
 	"github.com/olivere/elastic"
 	"github.com/teris-io/shortid"
-
-	"github.com/StreamSpace/ss-light-client/examples/auto/objects"
 )
 
 const (
@@ -27,10 +25,10 @@ const (
 )
 
 type Document struct {
-	ID        string          `json:"id"`
-	CreatedAt time.Time       `json:"created_at"`
-	Content   interface{}     `json:"content"`
-	Object    objects.FileObj `json:"object"`
+	ID        string                 `json:"id"`
+	CreatedAt time.Time              `json:"created_at"`
+	Content   interface{}            `json:"content"`
+	Object    map[string]interface{} `json:"object"`
 }
 
 type StatOut struct {
@@ -60,13 +58,12 @@ func main() {
 	data, _ := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 
-	sharedObjects := []*objects.FileObj{}
+	sharedObjects := []map[string]interface{}{}
 
 	err = json.Unmarshal(data, &sharedObjects)
-	//if err != nil {
-	//	log.Fatal( err )
-	//}
-
+	if err != nil {
+		log.Fatal(err)
+	}
 	elasticClient, err := elastic.NewClient(
 		elastic.SetURL(str["elastic_url"]),
 		elastic.SetSniff(false),
@@ -76,7 +73,6 @@ func main() {
 		log.Fatalf("Unable to connect to elasticdb : %s. Exiting...", err.Error())
 	}
 	bulk := elasticClient.Bulk().Index(elasticIndexName).Type(elasticTypeName)
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	for {
@@ -89,7 +85,7 @@ func main() {
 			randomIndex := rand.Intn(len(sharedObjects))
 			log.Println("Downloading ", randomIndex, " after ", 30+n, " second interval")
 			start := time.Now()
-			cmd := exec.Command("lite", "-sharable", sharedObjects[randomIndex].GetLink(), "-stat", "-logToStderr")
+			cmd := exec.Command("lite", "-sharable", fmt.Sprintf("%s", sharedObjects[randomIndex]["link"]), "-stat", "-logToStderr")
 			var out bytes.Buffer
 			cmd.Stdout = &out
 			err = cmd.Run()
@@ -104,7 +100,7 @@ func main() {
 				ID:        shortid.MustGenerate(),
 				CreatedAt: time.Now().UTC(),
 				Content:   output,
-				Object:    *sharedObjects[randomIndex],
+				Object:    sharedObjects[randomIndex],
 			}
 			bulk.Add(elastic.NewBulkIndexRequest().Id(doc.ID).Doc(doc))
 			if _, err := bulk.Do(context.Background()); err != nil {
