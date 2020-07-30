@@ -29,6 +29,7 @@ ENV SRC_DIR /ss-ipfs-lite
 ENV EXEC_DIR /ss-ipfs-lite/examples/litepeer/
 ENV AUTO_DIR /ss-ipfs-lite/examples/auto/
 
+COPY --from=0 /etc/ssl/certs /etc/ssl/certs
 COPY --from=0 $EXEC_DIR/ss-light-linux-amd64 /usr/local/bin/lite
 COPY --from=0 $AUTO_DIR/auto /usr/local/bin/auto
 COPY --from=0 $AUTO_DIR/env.json /home/env.json
