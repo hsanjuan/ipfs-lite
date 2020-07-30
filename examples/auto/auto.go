@@ -67,6 +67,7 @@ func main() {
 	elasticClient, err := elastic.NewClient(
 		elastic.SetURL(str["elastic_url"]),
 		elastic.SetSniff(false),
+		elastic.SetHealthcheck(false),
 		elastic.SetBasicAuth(str["elastic_user"], str["elastic_password"]),
 	)
 	if err != nil {
