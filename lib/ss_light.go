@@ -49,8 +49,8 @@ type cookie struct {
 }
 
 type StatOut struct {
-	ConnectedPeers []string            `json:"connected_peers"`
-	Ledgers        []*engine.SSReceipt `json:"ledgers"`
+	ConnectedPeers []string
+	Ledgers        []*engine.SSReceipt
 }
 
 type info struct {

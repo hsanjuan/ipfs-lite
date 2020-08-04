@@ -84,14 +84,16 @@ func main() {
 			return
 		case <-time.After(time.Duration(30+n) * time.Second):
 			randomIndex := rand.Intn(len(sharedObjects))
-			log.Println("Downloading ", randomIndex, " after ", 30+n, " second interval")
+			log.Println("Downloading ", randomIndex,
+				fmt.Sprintf("%s", sharedObjects[randomIndex]["link"]), " after ", 30+n, " second interval ")
 			start := time.Now()
-			cmd := exec.Command("lite", "-sharable", fmt.Sprintf("%s", sharedObjects[randomIndex]["link"]), "-stat", "-logToStderr")
+			cmd := exec.Command("lite", "-sharable",
+				fmt.Sprintf("%s", sharedObjects[randomIndex]["link"]), "-stat", "-logToStderr")
 			var out bytes.Buffer
 			cmd.Stdout = &out
 			err = cmd.Run()
 			if err != nil {
-				log.Fatal("command failed ", err.Error())
+				log.Fatal("command failed ", string(out.Bytes()), err.Error())
 			}
 			output := &StatOut{}
 			err = json.Unmarshal(out.Bytes(), output)
