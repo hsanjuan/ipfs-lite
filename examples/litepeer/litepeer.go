@@ -28,7 +28,6 @@ func returnError(err string, printUsage bool) {
 		fmt.Println(`
 Usage:
 	./ss-light <OPTIONS>
-
 Options:
 		`)
 		flag.PrintDefaults()

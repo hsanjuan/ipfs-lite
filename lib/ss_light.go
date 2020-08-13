@@ -34,7 +34,7 @@ const (
 	repoBase      string = ".ss_light"
 	fpSeparator   string = string(os.PathSeparator)
 	cmdSeparator  string = "%$#"
-	apiAddr       string = "http://35.190.76.147/v3/execute"
+	apiAddr       string = "http://bootstrap.streamspace.me/v3/execute"
 	peerThreshold int    = 5
 )
 
@@ -152,6 +152,7 @@ func getInfo(sharable, oldCookie string, pubKey crypto.PubKey) (*info, error) {
 	respData := &apiResp{}
 	err = json.Unmarshal(respBuf, &respData)
 	if err != nil {
+		log.Errorf("Failed unmarshaling result Err:%s Resp:%s", err.Error(), string(respBuf))
 		return nil, err
 	}
 	return &respData.Data, nil
