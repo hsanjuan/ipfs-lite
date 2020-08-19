@@ -51,10 +51,10 @@ type Peer struct {
 
 	cfg *Config
 
-	host  host.Host
-	dht   routing.Routing
-	store datastore.Batching
-
+	Host            host.Host
+	dht             routing.Routing
+	store           datastore.Batching
+	Scp             *scp.Scp
 	ipld.DAGService // become a DAG service
 	bstore          blockstore.Blockstore
 	bserv           blockservice.BlockService
@@ -81,7 +81,7 @@ func New(
 	p := &Peer{
 		ctx:   ctx,
 		cfg:   cfg,
-		host:  host,
+		Host:  host,
 		dht:   dht,
 		store: store,
 	}
@@ -118,8 +118,8 @@ func (p *Peer) setupBlockService() error {
 		return nil
 	}
 
-	scpModule, err := scp.NewScpModule(p.ctx, p.host, p.dht, scp.Params{
-		DeviceID: "lc_" + p.host.ID().Pretty(),
+	scpModule, err := scp.NewScpModule(p.ctx, p.Host, p.dht, scp.Params{
+		DeviceID: "lc_" + p.Host.ID().Pretty(),
 		Role:     "light-client",
 		Mtdt:     p.cfg.Mtdt,
 		Rate:     p.cfg.Rate,
@@ -127,6 +127,7 @@ func (p *Peer) setupBlockService() error {
 	if err != nil {
 		return err
 	}
+	p.Scp = scpModule
 	bswap := bitswap.New(p.ctx, scpModule, p.bstore, bitswap.ProvideEnabled(false))
 	p.bserv = blockservice.New(p.bstore, bswap)
 	return nil
@@ -156,7 +157,7 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) int {
 		wg.Add(1)
 		go func(pinfo peer.AddrInfo) {
 			defer wg.Done()
-			err := p.host.Connect(p.ctx, pinfo)
+			err := p.Host.Connect(p.ctx, pinfo)
 			if err != nil {
 				logger.Warn(err)
 				return

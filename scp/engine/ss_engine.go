@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"math/big"
 	"strconv"
 	"sync"
 	"time"
@@ -380,7 +381,9 @@ func (e *Engine) HandleMicroPayment(p peer.ID, mp *mppb.MicropaymentMsg) {
 	defer e.lock.Unlock()
 
 	l.Recvd = mp.Amount
-	l.BytesPayRecvd = uint64(mp.Amount / e.ssConf.Rate())
+	bfRecvd, bfRate := big.NewFloat(l.Recvd), big.NewFloat(e.ssConf.Rate())
+	bfBytesPayRecvd := new(big.Float).Quo(bfRecvd, bfRate)
+	l.BytesPayRecvd, _ = bfBytesPayRecvd.Uint64()
 	l.MpExchangeCount++
 	l.LastMpExchange = time.Now().Unix()
 	l.SignedMp = mp.TxnHash
@@ -420,7 +423,9 @@ func (e *Engine) GenerateMicroPayment(p peer.ID, blkLen int) {
 				defer e.lock.Unlock()
 
 				l.Sent = msg.Amount
-				l.BytesPaid = uint64(l.Sent / e.ssConf.Rate())
+				bfSent, bfRate := big.NewFloat(l.Sent), big.NewFloat(e.ssConf.Rate())
+				bfBytesPaid := new(big.Float).Quo(bfSent, bfRate)
+				l.BytesPaid, _ = bfBytesPaid.Uint64()
 				l.MpExchangeCount++
 				l.LastMpExchange = time.Now().Unix()
 				log.Debugf("Updated SSLedger. %v", l.Loggable())

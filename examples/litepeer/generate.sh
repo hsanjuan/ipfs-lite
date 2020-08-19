@@ -4,3 +4,4 @@ GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -o ss-light-darwin-amd64 lite
 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ss-light-linux-amd64 litepeer.go
 GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -o ss-light-windows-amd64.exe litepeer.go
 upx --brute ss-light-*
+gon -log-level=info -log-json ./config.json
