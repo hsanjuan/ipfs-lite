@@ -152,7 +152,7 @@ func main() {
 
 type noopProgress struct{}
 
-func (u *noopProgress) UpdateProgress(p, downloadedSize, fullSize int) {
+func (u *noopProgress) UpdateProgress(p lib.ProgressOut) {
 	return
 }
 
@@ -161,9 +161,12 @@ type updateProgress struct {
 	jsonOut bool
 }
 
-func (u *updateProgress) UpdateProgress(p, downloadedSize, fullSize int) {
-	dMB := float32(downloadedSize) / (1024 * 1024)
-	fMB := float32(fullSize) / (1024 * 1024)
-	out := lib.NewOut(200, "Progress", "", fmt.Sprintf("%d%% (%.2fMB / %.2fMB)", p, dMB, fMB))
+func (u *updateProgress) UpdateProgress(p lib.ProgressOut) {
+	var out *lib.Out
+	if u.jsonOut {
+		out = lib.NewOut(200, "Progress", "", p)
+	} else {
+		out = lib.NewOut(200, "Progress", "", fmt.Sprintf("%d%% (%s / %s)", p.Percentage, p.Downloaded, p.TotalSize))
+	}
 	lib.OutMessage(out, u.jsonOut)
 }

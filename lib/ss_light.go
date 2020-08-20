@@ -53,9 +53,15 @@ type cookie struct {
 }
 
 type StatOut struct {
-	ConnectedPeers []string
-	Ledgers        []*engine.SSReceipt
-	DownloadTime   int
+	ConnectedPeers []string            `json:"connected_peers"`
+	Ledgers        []*engine.SSReceipt `json:"ledger"`
+	DownloadTime   int                 `json:"download_time"`
+}
+
+type ProgressOut struct {
+	Percentage int    `json:"percentage"`
+	Downloaded string `json:"downloaded"`
+	TotalSize  string `json:"total_size"`
 }
 
 type info struct {
@@ -238,7 +244,7 @@ func NewLightClient(
 }
 
 type ProgressUpdater interface {
-	UpdateProgress(int, int, int)
+	UpdateProgress(ProgressOut)
 }
 
 func (l *LightClient) Start(
@@ -379,7 +385,12 @@ func (l *LightClient) Start(
 				if err == nil {
 					prog := float64(st.Size()) / float64(rsc.Size()) * 100
 					log.Infof("Updating progress %d", int(prog))
-					progUpd.UpdateProgress(int(prog), int(st.Size()), int(rsc.Size()))
+					progOut := ProgressOut{
+						Percentage: int(prog),
+						Downloaded: fmt.Sprintf("%.2fMB", float32(st.Size())/(1024*1024)),
+						TotalSize:  fmt.Sprintf("%.2fMB", float32(rsc.Size())/(1024*1024)),
+					}
+					progUpd.UpdateProgress(progOut)
 					if prog == 100 {
 						log.Infof("Progress complete")
 						return
