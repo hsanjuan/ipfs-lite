@@ -122,14 +122,14 @@ func SetupLibp2p(
 }
 
 func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dualdht.DHT, error) {
-	dhtOpts := []dht.Option{
-		dht.NamespacedValidator("pk", record.PublicKeyValidator{}),
-		dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()}),
-		dht.Concurrency(10),
-		dht.Mode(dht.ModeAuto),
+	dhtOpts := []dualdht.Option{
+		dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
+		dualdht.DHTOption(dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()})),
+		dualdht.DHTOption(dht.Concurrency(10)),
+		dualdht.DHTOption(dht.Mode(dht.ModeAuto)),
 	}
 	if ds != nil {
-		dhtOpts = append(dhtOpts, dht.Datastore(ds))
+		dhtOpts = append(dhtOpts, dualdht.DHTOption(dht.Datastore(ds)))
 	}
 
 	return dualdht.New(ctx, h, dhtOpts...)
