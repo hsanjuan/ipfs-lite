@@ -19,7 +19,6 @@ import (
 	pnet "github.com/libp2p/go-libp2p-core/pnet"
 	routing "github.com/libp2p/go-libp2p-core/routing"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	"github.com/libp2p/go-libp2p-kad-dht/dual"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	record "github.com/libp2p/go-libp2p-record"
 	secio "github.com/libp2p/go-libp2p-secio"
@@ -123,7 +122,7 @@ func SetupLibp2p(
 }
 
 func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dualdht.DHT, error) {
-	dhtOpts := []dual.Option{
+	dhtOpts := []dualdht.Option{
 		dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
 		dualdht.DHTOption(dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()})),
 		dualdht.DHTOption(dht.Concurrency(10)),
