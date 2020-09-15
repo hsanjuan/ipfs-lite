@@ -408,6 +408,9 @@ func (l *LightClient) Start(
 
 	_, err = io.Copy(dst, rsc)
 	if err != nil {
+		if err == context.DeadlineExceeded {
+			return NewOut(timeoutError, "Unable to fetch data", err.Error(), nil)
+		}
 		return NewOut(internalError, "Failed writing to destination", err.Error(), nil)
 	}
 	downloadTime := time.Now().Unix() - startTime

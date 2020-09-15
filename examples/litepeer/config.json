@@ -1,8 +1,8 @@
 {
-  "source" : ["./ss-light-darwin-amd64"],
+  "source" : ["./swrm-client-darwin-amd64"],
   "bundle_id" : "io.swrmlabs.hive.lite",
   "notarize": [{
-    "path": "./ss-light-darwin-amd64.dmg",
+    "path": "./swrm-client-darwin-amd64.dmg",
     "bundle_id": "io.swrmlabs.hive.lite",
     "staple": true
   }],
@@ -14,7 +14,7 @@
     "application_identity" : "Developer ID Application: StreamSpace, LLC"
   },
   "dmg" :{
-    "output_path":  "./ss-light-darwin-amd64.dmg",
+    "output_path":  "./swrm-client-darwin-amd64.dmg",
     "volume_name":  "Hive-Lite"
   }
 }
