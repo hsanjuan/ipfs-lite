@@ -32,7 +32,9 @@ var log = logger.Logger("ss_light")
 const (
 	fpSeparator   string = string(os.PathSeparator)
 	cmdSeparator  string = "%$#"
-	apiAddr       string = "http://35.244.28.138:6343/v3/execute"
+	apiAddr       string = "http://localhost:4343"
+	fetchPath     string = "v1/fetch"
+	completePath  string = "v1/complete"
 	peerThreshold int    = 5
 
 	success        = 200
@@ -70,40 +72,6 @@ type info struct {
 	Rate     string
 }
 
-type apiResp struct {
-	Status  int    `json:"status"`
-	Data    info   `json:"data"`
-	Details string `json:"details"`
-}
-
-func (a *apiResp) UnmarshalJSON(b []byte) error {
-	val := map[string]string{}
-	tmp := struct {
-		Status  int             `json:"status"`
-		Details string          `json:"details"`
-		Data    json.RawMessage `json:"data"`
-	}{}
-	log.Debugf("Raw response %s", string(b))
-	err := json.Unmarshal(b, &val)
-	if err != nil {
-		return err
-	}
-	log.Debugf("API response %s", val["val"])
-	err = json.Unmarshal([]byte(val["val"]), &tmp)
-	if err != nil {
-		return err
-	}
-	if tmp.Status != 200 {
-		errStr := tmp.Details
-		if len(errStr) == 0 {
-			errStr = fmt.Sprintf("Invalid status from server: %s", tmp.Status)
-		}
-		return errors.New(errStr)
-	}
-	a.Status = tmp.Status
-	return json.Unmarshal(tmp.Data, &a.Data)
-}
-
 func combineArgs(separator string, args ...string) (retPath string) {
 	for idx, v := range args {
 		if idx != 0 {
@@ -126,32 +94,18 @@ func getExternalIp() string {
 func getInfo(sharable, oldCookie string, pubKey crypto.PubKey) (*info, error) {
 	pubKB, _ := pubKey.Bytes()
 	args := map[string]interface{}{
-		"val": combineArgs(
-			cmdSeparator,
-			"hive",
-			"customer",
-			"fetch",
-			sharable,
-			"--public-key",
-			base64.StdEncoding.EncodeToString(pubKB),
-			"--source-ip",
-			getExternalIp(),
-			"-j",
-		),
+		"public_key": base64.StdEncoding.EncodeToString(pubKB),
+		"src_ip":     getExternalIp(),
 	}
+	fetchUrl := fmt.Sprintf("%s/%s?link=%s", apiAddr, fetchPath, sharable)
 	if len(oldCookie) > 0 {
-		args["val"] = combineArgs(
-			cmdSeparator,
-			args["val"].(string),
-			"--cookie",
-			oldCookie,
-		)
+		fetchUrl += fmt.Sprintf("&cookie=%s", oldCookie)
 	}
 	buf, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := http.Post(apiAddr, "application/json", bytes.NewReader(buf))
+	resp, err := http.Post(fetchUrl, "application/json", bytes.NewReader(buf))
 	if err != nil {
 		return nil, err
 	}
@@ -160,32 +114,22 @@ func getInfo(sharable, oldCookie string, pubKey crypto.PubKey) (*info, error) {
 	if err != nil {
 		return nil, err
 	}
-	respData := &apiResp{}
-	err = json.Unmarshal(respBuf, &respData)
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(string(respBuf))
+	}
+	respData := &info{}
+	err = json.Unmarshal(respBuf, respData)
 	if err != nil {
 		log.Errorf("Failed unmarshaling result Err:%s Resp:%s", err.Error(), string(respBuf))
 		return nil, err
 	}
-	return &respData.Data, nil
+	return respData, nil
 }
 
 func updateInfo(i *info, timeConsumed int64) error {
-	args := map[string]interface{}{
-		"val": combineArgs(
-			cmdSeparator,
-			"hive",
-			"customer",
-			"complete",
-			i.Cookie.Id,
-			fmt.Sprintf("%d", timeConsumed),
-			"-j",
-		),
-	}
-	buf, err := json.Marshal(args)
-	if err != nil {
-		return err
-	}
-	resp, err := http.Post(apiAddr, "application/json", bytes.NewReader(buf))
+	completeUrl := fmt.Sprintf("%s/%s?cookie=%s&time=%d",
+		completePath, i.Cookie.Id, timeConsumed)
+	resp, err := http.Post(completeUrl, "application/json", nil)
 	if err != nil {
 		return err
 	}
@@ -194,9 +138,12 @@ func updateInfo(i *info, timeConsumed int64) error {
 	if err != nil {
 		return err
 	}
-	respData := &apiResp{}
-	err = json.Unmarshal(respBuf, &respData)
-	if err != nil && respData.Status != 200 {
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(string(respBuf))
+	}
+	respData := &info{}
+	err = json.Unmarshal(respBuf, respData)
+	if err != nil {
 		return err
 	}
 	return nil
@@ -367,7 +314,6 @@ func (l *LightClient) Start(
 		log.Errorf("Failed decoding file hash Err: %s", err.Error())
 		return NewOut(internalError, "Failed decoding filehash provided", err.Error(), nil)
 	}
-
 	// STEP : Starting Download
 	showStep(success, "Starting download", l.jsonOut)
 
@@ -405,7 +351,6 @@ func (l *LightClient) Start(
 			}
 		}()
 	}
-
 	_, err = io.Copy(dst, rsc)
 	if err != nil {
 		if err == context.DeadlineExceeded {
