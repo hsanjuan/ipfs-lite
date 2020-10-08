@@ -14,6 +14,7 @@ import (
 	"time"
 
 	ipfslite "github.com/StreamSpace/ss-light-client"
+	"github.com/StreamSpace/ss-light-client/scp"
 	"github.com/StreamSpace/ss-light-client/scp/engine"
 	externalip "github.com/glendc/go-external-ip"
 	"github.com/ipfs/go-cid"
@@ -32,7 +33,7 @@ var log = logger.Logger("ss_light")
 const (
 	fpSeparator   string = string(os.PathSeparator)
 	cmdSeparator  string = "%$#"
-	apiAddr       string = "http://localhost:4343"
+	apiAddr       string = "http://bootstrap.streamspace.me"
 	fetchPath     string = "v1/fetch"
 	completePath  string = "v1/complete"
 	peerThreshold int    = 5
@@ -91,16 +92,13 @@ func getExternalIp() string {
 	return ip.String()
 }
 
-func getInfo(sharable, oldCookie string, pubKey crypto.PubKey) (*info, error) {
+func getInfo(sharable string, pubKey crypto.PubKey) (*info, error) {
 	pubKB, _ := pubKey.Bytes()
 	args := map[string]interface{}{
 		"public_key": base64.StdEncoding.EncodeToString(pubKB),
 		"src_ip":     getExternalIp(),
 	}
 	fetchUrl := fmt.Sprintf("%s/%s?link=%s", apiAddr, fetchPath, sharable)
-	if len(oldCookie) > 0 {
-		fetchUrl += fmt.Sprintf("&cookie=%s", oldCookie)
-	}
 	buf, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
@@ -128,7 +126,7 @@ func getInfo(sharable, oldCookie string, pubKey crypto.PubKey) (*info, error) {
 
 func updateInfo(i *info, timeConsumed int64) error {
 	completeUrl := fmt.Sprintf("%s/%s?cookie=%s&time=%d",
-		completePath, i.Cookie.Id, timeConsumed)
+		apiAddr, completePath, i.Cookie.Id, timeConsumed)
 	resp, err := http.Post(completeUrl, "application/json", nil)
 	if err != nil {
 		return err
@@ -140,11 +138,6 @@ func updateInfo(i *info, timeConsumed int64) error {
 	}
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(string(respBuf))
-	}
-	respData := &info{}
-	err = json.Unmarshal(respBuf, respData)
-	if err != nil {
-		return err
 	}
 	return nil
 }
@@ -200,12 +193,11 @@ func (l *LightClient) Start(
 	stat bool,
 	progUpd ProgressUpdater,
 ) *Out {
-	metadata, err := getInfo(sharable, "", l.pubKey)
+	metadata, err := getInfo(sharable, l.pubKey)
 	if err != nil {
 		log.Errorf("Failed getting metadata Err: %s", err.Error())
 		return NewOut(serviceError, "Failed getting metadata", err.Error(), nil)
 	}
-
 	// STEP : Got metadata
 	showStep(success, "Got metadata", l.jsonOut)
 
@@ -221,7 +213,6 @@ func (l *LightClient) Start(
 		log.Errorf("Failed creating dest file Err: %s", err.Error())
 		return NewOut(destinationErr, "Failed creating destination file", err.Error(), nil)
 	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
 	defer cancel()
 
@@ -230,7 +221,6 @@ func (l *LightClient) Start(
 		log.Errorf("Failed decoding swarm key Err: %s", err.Error())
 		return NewOut(internalError, "Failed decoding swarm key provided", err.Error(), nil)
 	}
-
 	listenIP4, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/45000")
 	listenIP6, _ := multiaddr.NewMultiaddr("/ip6/::/tcp/45000")
 	h, dht, err := ipfslite.SetupLibp2p(
@@ -256,12 +246,13 @@ func (l *LightClient) Start(
 		log.Errorf("Failed setting up p2p xfer node Err: %s", err.Error())
 		return NewOut(internalError, "Failed setting up light client", err.Error(), nil)
 	}
-
+	lite.Scp.AddHook(scp.PeerConnected, func() {
+		lite.Dht.Bootstrap(ctx)
+	})
 	// STEP : Download agent created
 	showStep(success, "Download agent initialized", l.jsonOut)
 
 	count := lite.Bootstrap(metadata.Cookie.Leaders)
-
 	// STEP : Bootstrap done
 	showStep(success, "Bootstrapped agent", l.jsonOut)
 
