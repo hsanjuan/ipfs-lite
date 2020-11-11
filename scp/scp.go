@@ -28,6 +28,12 @@ type Params struct {
 	Rate     string
 }
 
+type Hook string
+
+var (
+	PeerConnected Hook = "PeerConnected"
+)
+
 func NewScpModule(
 	ctx context.Context,
 	h host.Host,
@@ -57,6 +63,7 @@ type Scp struct {
 	engine     *engine.Engine
 	stat       *stats
 	workerStop context.CancelFunc
+	hooks      map[Hook]func()
 }
 
 func NewScp(
@@ -74,6 +81,7 @@ func NewScp(
 		stat:           &stats{stat: make(map[string]*Stat)},
 		BitSwapNetwork: bsnet.NewFromIpfsHost(h, r),
 		engine:         e,
+		hooks:          make(map[Hook]func()),
 	}
 	s.h.SetStreamHandler(message.HandshakeProto, s.handleScpStream)
 	s.h.SetStreamHandler(message.MicropaymentProto, s.handleScpStream)
@@ -130,10 +138,17 @@ func (s *Scp) ReceiveMessage(
 	}
 }
 
+func (s *Scp) AddHook(h Hook, fn func()) {
+	s.hooks[h] = fn
+}
+
 func (s *Scp) PeerConnected(p peer.ID) {
 	if s.engine.HandshakeDone(p) {
 		log.Infof("SCP Handshake done for %s. Sending notification to bitswap", p)
 		s.Receiver.PeerConnected(p)
+		if hk, ok := s.hooks[PeerConnected]; ok {
+			hk()
+		}
 	}
 }
 

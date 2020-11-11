@@ -52,7 +52,7 @@ type Peer struct {
 	cfg *Config
 
 	Host            host.Host
-	dht             routing.Routing
+	Dht             routing.Routing
 	store           datastore.Batching
 	Scp             *scp.Scp
 	ipld.DAGService // become a DAG service
@@ -82,7 +82,7 @@ func New(
 		ctx:   ctx,
 		cfg:   cfg,
 		Host:  host,
-		dht:   dht,
+		Dht:   dht,
 		store: store,
 	}
 
@@ -118,7 +118,7 @@ func (p *Peer) setupBlockService() error {
 		return nil
 	}
 
-	scpModule, err := scp.NewScpModule(p.ctx, p.Host, p.dht, scp.Params{
+	scpModule, err := scp.NewScpModule(p.ctx, p.Host, p.Dht, scp.Params{
 		DeviceID: "lc_" + p.Host.ID().Pretty(),
 		Role:     "light-client",
 		Mtdt:     p.cfg.Mtdt,
@@ -180,7 +180,7 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) int {
 		logger.Warnf("only connected to %d bootstrap peers out of %d", i, nPeers)
 	}
 
-	err := p.dht.Bootstrap(p.ctx)
+	err := p.Dht.Bootstrap(p.ctx)
 	if err != nil {
 		logger.Error(err)
 		return 0
