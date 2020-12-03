@@ -218,7 +218,7 @@ func (l *LightClient) Start(
 	var res *Out
 	redo := true
 	i := 1
-	for redo {
+	for redo && i < 4 {
 		showStep(success, fmt.Sprintf("Attempt #%d", i), l.jsonOut)
 		i++
 		ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
@@ -245,6 +245,9 @@ func (l *LightClient) Start(
 			}
 		}()
 		wg.Wait()
+	}
+	if i == 4 && redo {
+		return NewOut(internalError, "Failed on retrying thrice", "Download failed to start", nil)
 	}
 	return res
 }
