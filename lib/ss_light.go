@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	ipfslite "github.com/StreamSpace/ss-light-client"
@@ -213,9 +214,52 @@ func (l *LightClient) Start(
 		log.Errorf("Failed creating dest file Err: %s", err.Error())
 		return NewOut(destinationErr, "Failed creating destination file", err.Error(), nil)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
-	defer cancel()
 
+	var res *Out
+	redo := true
+	i := 1
+	for redo && i < 4 {
+		showStep(success, fmt.Sprintf("Attempt #%d", i), l.jsonOut)
+		i++
+		ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+		defer cancel()
+
+		ready := make(chan bool)
+		wg := sync.WaitGroup{}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			res = l.download(ctx, metadata, dst, stat, progUpd, ready)
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			select {
+			case <-time.After(time.Minute * 1):
+				cancel()
+			case <-ready:
+				redo = false
+				showStep(success, "Download started", l.jsonOut)
+			}
+		}()
+		wg.Wait()
+	}
+	if i == 4 && redo {
+		return NewOut(internalError, "Failed on retrying thrice", "Download failed to start", nil)
+	}
+	return res
+}
+
+func (l *LightClient) download(
+	ctx context.Context,
+	metadata *info,
+	dst *os.File,
+	stat bool,
+	progUpd ProgressUpdater,
+	started chan<- bool,
+) *Out {
 	psk, err := pnet.DecodeV1PSK(bytes.NewReader(metadata.SwarmKey))
 	if err != nil {
 		log.Errorf("Failed decoding swarm key Err: %s", err.Error())
@@ -314,6 +358,8 @@ func (l *LightClient) Start(
 		return NewOut(500, "Failed getting file", err.Error(), nil)
 	}
 	defer rsc.Close()
+
+	started <- true
 
 	if progUpd != nil {
 		go func() {
