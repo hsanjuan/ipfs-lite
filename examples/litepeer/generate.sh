@@ -25,7 +25,7 @@ GOOS=linux GOARCH=amd64 go build -ldflags "$LDFLAGS" -o $OUT/swrm-client-linux-a
 GOOS=windows GOARCH=amd64 go build -ldflags "$LDFLAGS" -o $OUT/swrm-client-windows-amd64.exe litepeer.go
 
 # Generate packed binaries
-upx --brute swrm-client-*
+upx --brute $OUT/swrm-client-*
 
 if [[ "$2" = "no" ]]; then
    echo "Not notarising"

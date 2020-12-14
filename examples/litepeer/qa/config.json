@@ -1,6 +1,6 @@
 {
   "notarize": [{
-    "path": "./swrm-client-darwin-amd64.zip",
+    "path": "./qa/swrm-client-darwin-amd64.zip",
     "bundle_id": "io.swrmlabs.hive.lite",
     "staple": false
   }],

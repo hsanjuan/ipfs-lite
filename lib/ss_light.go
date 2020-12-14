@@ -30,11 +30,12 @@ import (
 
 var log = logger.Logger("ss_light")
 
+var ApiAddr string = "http://bootstrap.swrmlabs.io"
+
 // Constants
 const (
 	fpSeparator   string = string(os.PathSeparator)
 	cmdSeparator  string = "%$#"
-	ApiAddr       string = "http://bootstrap.swrmlabs.io"
 	fetchPath     string = "v1/fetch"
 	completePath  string = "v1/complete"
 	peerThreshold int    = 5
