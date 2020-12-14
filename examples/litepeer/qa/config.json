@@ -1,0 +1,11 @@
+{
+  "notarize": [{
+    "path": "./swrm-client-darwin-amd64.zip",
+    "bundle_id": "io.swrmlabs.hive.lite",
+    "staple": false
+  }],
+  "apple_id": {
+    "username": "antim@stream.space",
+    "password": "@env:AC_PASSWORD"
+  }
+}

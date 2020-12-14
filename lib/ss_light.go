@@ -34,7 +34,7 @@ var log = logger.Logger("ss_light")
 const (
 	fpSeparator   string = string(os.PathSeparator)
 	cmdSeparator  string = "%$#"
-	apiAddr       string = "http://bootstrap.streamspace.me"
+	ApiAddr       string = "http://bootstrap.swrmlabs.io"
 	fetchPath     string = "v1/fetch"
 	completePath  string = "v1/complete"
 	peerThreshold int    = 5
@@ -99,7 +99,7 @@ func getInfo(sharable string, pubKey crypto.PubKey) (*info, error) {
 		"public_key": base64.StdEncoding.EncodeToString(pubKB),
 		"src_ip":     getExternalIp(),
 	}
-	fetchUrl := fmt.Sprintf("%s/%s?link=%s", apiAddr, fetchPath, sharable)
+	fetchUrl := fmt.Sprintf("%s/%s?link=%s", ApiAddr, fetchPath, sharable)
 	buf, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func getInfo(sharable string, pubKey crypto.PubKey) (*info, error) {
 
 func updateInfo(i *info, timeConsumed int64) error {
 	completeUrl := fmt.Sprintf("%s/%s?cookie=%s&time=%d",
-		apiAddr, completePath, i.Cookie.Id, timeConsumed)
+		ApiAddr, completePath, i.Cookie.Id, timeConsumed)
 	resp, err := http.Post(completeUrl, "application/json", nil)
 	if err != nil {
 		return err
@@ -237,7 +237,7 @@ func (l *LightClient) Start(
 		go func() {
 			defer wg.Done()
 			select {
-			case <-time.After(time.Minute * 1):
+			case <-time.After(time.Minute * 3):
 				cancel()
 			case <-ready:
 				redo = false
