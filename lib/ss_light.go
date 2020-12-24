@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/StreamSpace/scp"
+	"github.com/StreamSpace/scp/engine"
 	ipfslite "github.com/StreamSpace/ss-light-client"
-	"github.com/StreamSpace/ss-light-client/scp"
-	"github.com/StreamSpace/ss-light-client/scp/engine"
 	externalip "github.com/glendc/go-external-ip"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
@@ -30,7 +30,7 @@ import (
 
 var log = logger.Logger("ss_light")
 
-var ApiAddr string = "http://bootstrap.swrmlabs.io"
+var ApiAddr string = "https://boot.swrmlabs.io"
 
 // Constants
 const (
@@ -172,7 +172,7 @@ func NewLightClient(
 	to, err := time.ParseDuration(timeout)
 	if err != nil {
 		log.Warn("Invalid timeout duration specified. Using default 15m")
-		to = time.Minute * 45
+		to = time.Minute * 15
 	}
 
 	return &LightClient{
@@ -267,12 +267,13 @@ func (l *LightClient) download(
 		return NewOut(internalError, "Failed decoding swarm key provided", err.Error(), nil)
 	}
 	listenIP4, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/45000")
+	listenWS, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/45001/ws")
 	listenIP6, _ := multiaddr.NewMultiaddr("/ip6/::/tcp/45000")
 	h, dht, err := ipfslite.SetupLibp2p(
 		ctx,
 		l.privKey,
 		psk,
-		[]multiaddr.Multiaddr{listenIP4, listenIP6},
+		[]multiaddr.Multiaddr{listenIP4, listenIP6, listenWS},
 		l.ds,
 		ipfslite.Libp2pOptionsExtra...,
 	)
@@ -292,14 +293,17 @@ func (l *LightClient) download(
 		return NewOut(internalError, "Failed setting up light client", err.Error(), nil)
 	}
 	lite.Scp.AddHook(scp.PeerConnected, func() {
-		lite.Dht.Bootstrap(ctx)
+		err := lite.Dht.Bootstrap(ctx)
+		if err != nil {
+			log.Errorf("Failed DHT Bootstrap: %s", err.Error())
+		}
 	})
 	// STEP : Download agent created
 	showStep(success, "Download agent initialized", l.jsonOut)
 
 	count := lite.Bootstrap(metadata.Cookie.Leaders)
 	// STEP : Bootstrap done
-	showStep(success, "Bootstrapped agent", l.jsonOut)
+	showStep(success, fmt.Sprintf("Bootstrapped agent with %d leaders", count), l.jsonOut)
 
 	if count < peerThreshold {
 		go func() {

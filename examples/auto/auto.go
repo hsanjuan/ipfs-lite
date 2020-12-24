@@ -14,7 +14,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/StreamSpace/ss-light-client/scp/engine"
+	"github.com/StreamSpace/scp/engine"
 	"github.com/olivere/elastic"
 	"github.com/teris-io/shortid"
 )

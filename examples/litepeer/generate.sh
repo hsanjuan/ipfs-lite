@@ -14,7 +14,7 @@ if [[ "$1" = "qa" ]]; then
 fi
 
 # PKG path for overriding constants
-SCP=github.com/StreamSpace/ss-light-client/scp/config
+SCP=github.com/StreamSpace/scp/config
 LIB=github.com/StreamSpace/ss-light-client/lib
 
 LDFLAGS="-w -s -X $SCP.Epoch=$EPOCH -X $SCP.CycleDuration=$CYCLE -X $LIB.ApiAddr=$API"

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StreamSpace/ss-light-client/scp"
+	scp "github.com/StreamSpace/scp"
 	"github.com/ipfs/go-bitswap"
 	blockservice "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"

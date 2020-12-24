@@ -90,5 +90,5 @@ func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dualdht.D
 	if ds != nil {
 		dhtOpts = append(dhtOpts, dht.Datastore(ds))
 	}
-	return dualdht.New(ctx, h, dhtOpts...)
+	return dualdht.New(ctx, h, []dualdht.Option{dualdht.DHTOption(dhtOpts...)}...)
 }

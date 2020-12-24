@@ -1,0 +1,4 @@
+[submodule "scp"]
+	path = scp
+	url = git@github.com:StreamSpace/scp.git
+    branch = light-client
