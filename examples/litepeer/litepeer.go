@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"runtime"
 
+	vs "github.com/StreamSpace/ss-light-client/examples/litepeer/version"
 	"github.com/StreamSpace/ss-light-client/lib"
 	logger "github.com/ipfs/go-log/v2"
 )
@@ -22,6 +23,7 @@ var (
 	showProg    = flag.Bool("progress", false, "Enable progress on stdout")
 	jsonOut     = flag.Bool("json", false, "Display output in json format")
 	help        = flag.Bool("help", false, "Show command usage")
+	version     = flag.Bool("version", false, "Show to enviroment and commit hash")
 )
 
 func returnError(err string, printUsage bool) {
@@ -123,6 +125,12 @@ func main() {
 
 	if *help {
 		usage()
+		return
+	}
+
+	if *version {
+		fmt.Printf("%s-%s", vs.Env, vs.Commit)
+		fmt.Println()
 		return
 	}
 
