@@ -57,7 +57,7 @@ type Config struct {
 }
 
 func (cfg *Config) setDefaults() {
-	if cfg.ReprovideInterval <= 0 {
+	if cfg.ReprovideInterval == 0 {
 		cfg.ReprovideInterval = defaultReprovideInterval
 	}
 }
@@ -158,7 +158,7 @@ func (p *Peer) setupDAGService() error {
 }
 
 func (p *Peer) setupReprovider() error {
-	if p.cfg.Offline {
+	if p.cfg.Offline || p.cfg.ReprovideInterval < 0 {
 		p.reprovider = provider.NewOfflineProvider()
 		return nil
 	}
