@@ -2,13 +2,9 @@ package ipfslite
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"os/user"
 	"time"
 
 	"github.com/ipfs/go-datastore"
-	badger "github.com/ipfs/go-ds-badger"
 	config "github.com/ipfs/go-ipfs-config"
 	ipns "github.com/ipfs/go-ipns"
 	"github.com/libp2p/go-libp2p"
@@ -31,32 +27,6 @@ import (
 func DefaultBootstrapPeers() []peer.AddrInfo {
 	defaults, _ := config.DefaultBootstrapPeers()
 	return defaults
-}
-
-// IPFSBadgerDatastore returns the Badger datastore used by the IPFS daemon
-// (from `~/.ipfs/datastore`). Do not use the default datastore when the
-// regular IFPS daemon is running at the same time.
-func IPFSBadgerDatastore() (datastore.Batching, error) {
-	home := os.Getenv("HOME")
-	if home == "" {
-		usr, err := user.Current()
-		if err != nil {
-			panic(fmt.Sprintf("cannot get current user: %s", err))
-		}
-		home = usr.HomeDir
-	}
-
-	path, err := config.DataStorePath(home)
-	if err != nil {
-		return nil, err
-	}
-	return BadgerDatastore(path)
-}
-
-// BadgerDatastore returns a new instance of Badger-DS persisting
-// to the given path with the default options.
-func BadgerDatastore(path string) (datastore.Batching, error) {
-	return badger.NewDatastore(path, &badger.DefaultOptions)
 }
 
 // Libp2pOptionsExtra provides some useful libp2p options
