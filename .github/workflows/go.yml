@@ -26,6 +26,9 @@ jobs:
     - name: Build
       run: go build -v ./...
 
+    - name: Build WASM
+      run: GOOS=js GOARCH=wasm go build -v ./...
+
     - name: Test
       run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
 
