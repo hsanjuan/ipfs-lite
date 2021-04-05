@@ -29,8 +29,8 @@ jobs:
     - name: Test
       run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
 
-    - name: Staticheck
-      run: statickcheck ./...
+    - name: Staticcheck
+      run: staticcheck ./...
       
     - name: Send coverage
       run: bash <(curl -s https://codecov.io/bash)
