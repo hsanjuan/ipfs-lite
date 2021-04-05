@@ -27,7 +27,7 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v -race -coverprofile=coverage.txt -convermode=atomic
+      run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
 
     - name: Staticheck
       run: statickcheck ./...
