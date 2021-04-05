@@ -23,10 +23,6 @@ func main() {
 
 	log.SetLogLevel("*", "warn")
 
-	// Bootstrappers are using 1024 keys. See:
-	// https://github.com/ipfs/infra/issues/378
-	crypto.MinRsaKeyBits = 1024
-
 	ds, err := ipfslite.BadgerDatastore("test")
 	if err != nil {
 		panic(err)
