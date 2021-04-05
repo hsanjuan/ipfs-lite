@@ -4,7 +4,7 @@
 <img src="logo.png" alt="ipfs-lite" title="ipfs-lite" />
 </p>
 
-[![Build Status](https://travis-ci.org/hsanjuan/ipfs-lite.svg?branch=master)](https://travis-ci.org/hsanjuan/ipfs-lite)
+[![Build Status](https://github.com/hsanjuan/ipfs-lite/actions/workflows/go.yml/badge.svg)](https://github.com/hsanjuan/ipfs-lite/actions/workflows/go.yml)
 [![Godoc](https://godoc.org/github.com/hsanjuan/ipfs-lite?status.svg)](http://godoc.org/github.com/hsanjuan/ipfs-lite)
 
 IPFS-Lite is an embeddable, lightweight IPFS peer which runs the minimal setup
