@@ -21,7 +21,6 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	record "github.com/libp2p/go-libp2p-record"
-	secio "github.com/libp2p/go-libp2p-secio"
 	libp2ptls "github.com/libp2p/go-libp2p-tls"
 	"github.com/multiformats/go-multiaddr"
 )
@@ -68,7 +67,6 @@ var Libp2pOptionsExtra = []libp2p.Option{
 	libp2p.EnableAutoRelay(),
 	libp2p.EnableNATService(),
 	libp2p.Security(libp2ptls.ID, libp2ptls.New),
-	libp2p.Security(secio.ID, secio.New),
 	// TODO: re-enable when QUIC support private networks.
 	// libp2p.Transport(libp2pquic.NewTransport),
 	libp2p.DefaultTransports,
