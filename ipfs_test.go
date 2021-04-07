@@ -8,8 +8,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	datastore "github.com/ipfs/go-datastore"
-	dssync "github.com/ipfs/go-datastore/sync"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -22,8 +20,8 @@ var secret = "2cc2c79ea52c9cc85dfd3061961dd8c4230cce0b09f182a0822c1536bf1d5f21"
 func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	ds1 := dssync.MutexWrap(datastore.NewMapDatastore())
-	ds2 := dssync.MutexWrap(datastore.NewMapDatastore())
+	ds1 := NewInMemoryDatastore()
+	ds2 := NewInMemoryDatastore()
 	priv1, _, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
 	if err != nil {
 		t.Fatal(err)
