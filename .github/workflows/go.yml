@@ -14,6 +14,8 @@ jobs:
       GO111MODULE: on
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -25,6 +27,9 @@ jobs:
 
     - name: Build
       run: go build -v ./...
+
+    - name: Build WASM
+      run: GOOS=js GOARCH=wasm go build -v ./...
 
     - name: Test
       run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
