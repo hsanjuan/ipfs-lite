@@ -1,0 +1,16 @@
+version: 2
+updates:
+- package-ecosystem: gomod
+  directory: "/"
+  schedule:
+    interval: weekly
+    time: "04:00"
+  open-pull-requests-limit: 10
+  target-branch: dependency-upgrades
+  ignore:
+  - dependency-name: github.com/ipfs/go-log/v2
+    versions:
+    - 2.1.2
+  - dependency-name: github.com/libp2p/go-libp2p-secio
+    versions:
+    - 0.2.3
