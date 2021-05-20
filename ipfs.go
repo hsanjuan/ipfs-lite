@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	chunker "github.com/ipfs/go-ipfs-chunker"
+	"github.com/ipfs/go-ipfs-exchange-interface"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	provider "github.com/ipfs/go-ipfs-provider"
 	"github.com/ipfs/go-ipfs-provider/queue"
@@ -74,6 +75,7 @@ type Peer struct {
 	store datastore.Batching
 
 	ipld.DAGService // become a DAG service
+	exch            exchange.Interface
 	bstore          blockstore.Blockstore
 	bserv           blockservice.BlockService
 	reprovider      provider.System
@@ -149,6 +151,7 @@ func (p *Peer) setupBlockService() error {
 	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
 	bswap := bitswap.New(p.ctx, bswapnet, p.bstore)
 	p.bserv = blockservice.New(p.bstore, bswap)
+	p.exch = bswap
 	return nil
 }
 
@@ -328,4 +331,9 @@ func (p *Peer) BlockStore() blockstore.Blockstore {
 // a shorthand for .Blockstore().Has().
 func (p *Peer) HasBlock(ctx context.Context, c cid.Cid) (bool, error) {
 	return p.BlockStore().Has(ctx, c)
+}
+
+// Exchange returns the underlying exchange implementation
+func (p *Peer) Exchange() exchange.Interface {
+	return p.exch
 }
