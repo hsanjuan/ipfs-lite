@@ -124,8 +124,6 @@ func New(
 		return nil, err
 	}
 
-	go p.autoclose()
-
 	return p, nil
 }
 
@@ -186,10 +184,15 @@ func (p *Peer) setupReprovider() error {
 	return nil
 }
 
-func (p *Peer) autoclose() {
-	<-p.ctx.Done()
-	p.reprovider.Close()
-	p.bserv.Close()
+// Close the reprovider and
+func (p *Peer) Close() error {
+	if err := p.reprovider.Close(); err != nil {
+		return fmt.Errorf("closing reprovider: %s", err)
+	}
+	if err := p.bserv.Close(); err != nil {
+		return fmt.Errorf("closing block service: %s", err)
+	}
+	return nil
 }
 
 // Bootstrap is an optional helper to connect to the given peers and bootstrap

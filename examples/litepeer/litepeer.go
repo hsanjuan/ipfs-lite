@@ -43,6 +43,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer lite.Close()
 
 	lite.Bootstrap(ipfslite.DefaultBootstrapPeers())
 
