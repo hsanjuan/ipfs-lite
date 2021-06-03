@@ -71,9 +71,10 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 		Addrs: h2.Addrs(),
 	}
 
+	closers := []io.Closer{dht1, dht2, h1, h2}
 	closer = func(t *testing.T) {
 		cancel()
-		for _, cl := range []io.Closer{dht1, dht2, h1, h2} {
+		for _, cl := range closers {
 			err := cl.Close()
 			if err != nil {
 				t.Error(err)
@@ -85,11 +86,13 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 		closer(t)
 		t.Fatal(err)
 	}
+	closers = append(closers, p1)
 	p2, err = New(ctx, ds2, h2, dht2, nil)
 	if err != nil {
 		closer(t)
 		t.Fatal(err)
 	}
+	closers = append(closers, p1)
 
 	p1.Bootstrap([]peer.AddrInfo{pinfo2})
 	p2.Bootstrap([]peer.AddrInfo{pinfo1})
