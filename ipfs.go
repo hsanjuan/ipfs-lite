@@ -184,7 +184,7 @@ func (p *Peer) setupReprovider() error {
 	return nil
 }
 
-// Close the reprovider and
+// Close the reprovider and block service.
 func (p *Peer) Close() error {
 	if err := p.reprovider.Close(); err != nil {
 		return fmt.Errorf("closing reprovider: %s", err)
