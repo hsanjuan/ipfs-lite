@@ -18,10 +18,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ds, err := ipfslite.BadgerDatastore("test")
-	if err != nil {
-		panic(err)
-	}
+	ds := ipfslite.NewInMemoryDatastore()
 	priv, _, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
 	if err != nil {
 		panic(err)
