@@ -280,8 +280,9 @@ github.com/ipfs/go-bitswap v0.0.9/go.mod h1:kAPf5qgn2W2DrgAcscZ3HrM9qh4pH+X8Fkk3
 github.com/ipfs/go-bitswap v0.1.0/go.mod h1:FFJEf18E9izuCqUtHxbWEvq+reg7o4CW5wSAE1wsxj0=
 github.com/ipfs/go-bitswap v0.1.2/go.mod h1:qxSWS4NXGs7jQ6zQvoPY3+NmOfHHG47mhkiLzBpJQIs=
 github.com/ipfs/go-bitswap v0.1.8/go.mod h1:TOWoxllhccevbWFUR2N7B1MTSVVge1s6XSMiCSA4MzM=
-github.com/ipfs/go-bitswap v0.3.4 h1:AhJhRrG8xkxh6x87b4wWs+4U4y3DVB3doI8yFNqgQME=
 github.com/ipfs/go-bitswap v0.3.4/go.mod h1:4T7fvNv/LmOys+21tnLzGKncMeeXUYUd1nUiJ2teMvI=
+github.com/ipfs/go-bitswap v0.4.0 h1:bLiqrpef1na4wdqGLqHKv954s1zz6KFghfmQWCPjBik=
+github.com/ipfs/go-bitswap v0.4.0/go.mod h1:J2sAsp9UKxLgHDektSy3y3Q9OfQjM9sjhKBR1dlwrMg=
 github.com/ipfs/go-block-format v0.0.1/go.mod h1:DK/YYcsSUIVAFNwo/KZCdIIbpN0ROH/baNLgayt4pFc=
 github.com/ipfs/go-block-format v0.0.2/go.mod h1:AWR46JfpcObNfg3ok2JHDUfdiHRgWhJgCQF+KIgOPJY=
 github.com/ipfs/go-block-format v0.0.3 h1:r8t66QstRp/pd/or4dpnbVfXT5Gt7lOqRvC+/dDTpMc=
@@ -403,8 +404,9 @@ github.com/ipfs/go-path v0.0.7/go.mod h1:6KTKmeRnBXgqrTvzFrPV3CamxcgvXX/4z79tfAd
 github.com/ipfs/go-peertaskqueue v0.0.4/go.mod h1:03H8fhyeMfKNFWqzYEVyMbcPUeYrqP1MX6Kd+aN+rMQ=
 github.com/ipfs/go-peertaskqueue v0.1.0/go.mod h1:Jmk3IyCcfl1W3jTW3YpghSwSEC6IJ3Vzz/jUmWw8Z0U=
 github.com/ipfs/go-peertaskqueue v0.1.1/go.mod h1:Jmk3IyCcfl1W3jTW3YpghSwSEC6IJ3Vzz/jUmWw8Z0U=
-github.com/ipfs/go-peertaskqueue v0.2.0 h1:2cSr7exUGKYyDeUyQ7P/nHPs9P7Ht/B+ROrpN1EJOjc=
 github.com/ipfs/go-peertaskqueue v0.2.0/go.mod h1:5/eNrBEbtSKWCG+kQK8K8fGNixoYUnr+P7jivavs9lY=
+github.com/ipfs/go-peertaskqueue v0.4.0 h1:x1hFgA4JOUJ3ntPfqLRu6v4k6kKL0p07r3RSg9JNyHI=
+github.com/ipfs/go-peertaskqueue v0.4.0/go.mod h1:KL9F49hXJMoXCad8e5anivjN+kWdr+CyGcyh4K6doLc=
 github.com/ipfs/go-unixfs v0.2.4/go.mod h1:SUdisfUjNoSDzzhGVxvCL9QO/nKdwXdr+gbMUdqcbYw=
 github.com/ipfs/go-unixfs v0.2.6 h1:gq3U3T2vh8x6tXhfo3uSO3n+2z4yW0tYtNgVP/3sIyA=
 github.com/ipfs/go-unixfs v0.2.6/go.mod h1:GTTzQvaZsTZARdNkkdjDKFFnBhmO3e5mIM1PkH/x4p0=
@@ -505,6 +507,7 @@ github.com/libp2p/go-libp2p v0.7.4/go.mod h1:oXsBlTLF1q7pxr+9w6lqzS1ILpyHsaBPniV
 github.com/libp2p/go-libp2p v0.8.1/go.mod h1:QRNH9pwdbEBpx5DTJYg+qxcVaDMAz3Ee/qDKwXujH5o=
 github.com/libp2p/go-libp2p v0.13.0/go.mod h1:pM0beYdACRfHO1WcJlp65WXyG2A6NqYM+t2DTVAJxMo=
 github.com/libp2p/go-libp2p v0.14.0/go.mod h1:dsQrWLAoIn+GkHPN/U+yypizkHiB9tnv79Os+kSgQ4Q=
+github.com/libp2p/go-libp2p v0.14.3/go.mod h1:d12V4PdKbpL0T1/gsUNN8DfgMuRPDX8bS2QxCZlwRH0=
 github.com/libp2p/go-libp2p v0.14.4 h1:QCJE+jGyqxWdrSPuS4jByXCzosgaIg4SJTLCRplJ53w=
 github.com/libp2p/go-libp2p v0.14.4/go.mod h1:EIRU0Of4J5S8rkockZM7eJp2S0UrCyi55m2kJVru3rM=
 github.com/libp2p/go-libp2p-asn-util v0.0.0-20200825225859-85005c6cf052 h1:BM7aaOF7RpmNn9+9g6uTjGJ0cTzWr5j9i9IKeun2M8U=
@@ -742,6 +745,7 @@ github.com/libp2p/go-tcp-transport v0.1.0/go.mod h1:oJ8I5VXryj493DEJ7OsBieu8fcg2
 github.com/libp2p/go-tcp-transport v0.1.1/go.mod h1:3HzGvLbx6etZjnFlERyakbaYPdfjg2pWP97dFZworkY=
 github.com/libp2p/go-tcp-transport v0.2.0/go.mod h1:vX2U0CnWimU4h0SGSEsg++AzvBcroCGYw28kh94oLe0=
 github.com/libp2p/go-tcp-transport v0.2.1/go.mod h1:zskiJ70MEfWz2MKxvFB/Pv+tPIB1PpPUrHIWQ8aFw7M=
+github.com/libp2p/go-tcp-transport v0.2.3/go.mod h1:9dvr03yqrPyYGIEN6Dy5UvdJZjyPFvl1S/igQ5QD1SU=
 github.com/libp2p/go-tcp-transport v0.2.4/go.mod h1:9dvr03yqrPyYGIEN6Dy5UvdJZjyPFvl1S/igQ5QD1SU=
 github.com/libp2p/go-tcp-transport v0.2.7 h1:Z8Kc/Kb8tD84WiaH55xAlaEnkqzrp88jSEySCKV4+gg=
 github.com/libp2p/go-tcp-transport v0.2.7/go.mod h1:lue9p1b3VmZj1MhhEGB/etmvF/nBQ0X9CW2DutBT3MM=
