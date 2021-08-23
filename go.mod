@@ -6,7 +6,7 @@ require (
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/ipfs/go-bitswap v0.3.4
 	github.com/ipfs/go-blockservice v0.1.7
-	github.com/ipfs/go-cid v0.0.7
+	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-datastore v0.4.6
 	github.com/ipfs/go-ipfs-blockstore v1.0.4
 	github.com/ipfs/go-ipfs-chunker v0.0.5
