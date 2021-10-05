@@ -21,10 +21,10 @@ require (
 	github.com/ipfs/go-unixfs v0.2.6
 	github.com/libp2p/go-libp2p v0.15.1
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
-	github.com/libp2p/go-libp2p-core v0.9.0
+	github.com/libp2p/go-libp2p-core v0.10.0
 	github.com/libp2p/go-libp2p-kad-dht v0.13.1
 	github.com/libp2p/go-libp2p-record v0.1.3
-	github.com/libp2p/go-libp2p-tls v0.2.0
+	github.com/libp2p/go-libp2p-tls v0.3.0
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multihash v0.0.16
 )
