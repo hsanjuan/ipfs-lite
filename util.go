@@ -8,7 +8,7 @@ import (
 	dssync "github.com/ipfs/go-datastore/sync"
 	config "github.com/ipfs/go-ipfs-config"
 	ipns "github.com/ipfs/go-ipns"
-	"github.com/libp2p/go-libp2p"
+	libp2p "github.com/libp2p/go-libp2p"
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	host "github.com/libp2p/go-libp2p-core/host"
@@ -18,8 +18,9 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	record "github.com/libp2p/go-libp2p-record"
-	libp2ptls "github.com/libp2p/go-libp2p-tls"
-	"github.com/multiformats/go-multiaddr"
+	tcp "github.com/libp2p/go-tcp-transport"
+	websocket "github.com/libp2p/go-ws-transport"
+	multiaddr "github.com/multiformats/go-multiaddr"
 )
 
 // DefaultBootstrapPeers returns the default go-ipfs bootstrap peers (for use
@@ -43,10 +44,6 @@ var Libp2pOptionsExtra = []libp2p.Option{
 	libp2p.ConnectionManager(connmgr.NewConnManager(100, 600, time.Minute)),
 	libp2p.EnableAutoRelay(),
 	libp2p.EnableNATService(),
-	libp2p.Security(libp2ptls.ID, libp2ptls.New),
-	// TODO: re-enable when QUIC support private networks.
-	// libp2p.Transport(libp2pquic.NewTransport),
-	libp2p.DefaultTransports,
 }
 
 // SetupLibp2p returns a routed host and DHT instances that can be used to
@@ -73,11 +70,21 @@ func SetupLibp2p(
 
 	var ddht *dualdht.DHT
 	var err error
+	var transports = libp2p.DefaultTransports
+
+	if secret != nil {
+		transports = libp2p.ChainOptions(
+			libp2p.NoTransports,
+			libp2p.Transport(tcp.NewTCPTransport),
+			libp2p.Transport(websocket.New),
+		)
+	}
 
 	finalOpts := []libp2p.Option{
 		libp2p.Identity(hostKey),
 		libp2p.ListenAddrs(listenAddrs...),
 		libp2p.PrivateNetwork(secret),
+		transports,
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
 			ddht, err = newDHT(ctx, h, ds)
 			return ddht, err
@@ -86,7 +93,6 @@ func SetupLibp2p(
 	finalOpts = append(finalOpts, opts...)
 
 	h, err := libp2p.New(
-		ctx,
 		finalOpts...,
 	)
 	if err != nil {

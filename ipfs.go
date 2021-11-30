@@ -188,6 +188,7 @@ func (p *Peer) setupReprovider() error {
 
 func (p *Peer) autoclose() {
 	<-p.ctx.Done()
+	p.host.Close()
 	p.reprovider.Close()
 	p.bserv.Close()
 }
@@ -326,6 +327,6 @@ func (p *Peer) BlockStore() blockstore.Blockstore {
 
 // HasBlock returns whether a given block is available locally. It is
 // a shorthand for .Blockstore().Has().
-func (p *Peer) HasBlock(c cid.Cid) (bool, error) {
-	return p.BlockStore().Has(c)
+func (p *Peer) HasBlock(ctx context.Context, c cid.Cid) (bool, error) {
+	return p.BlockStore().Has(ctx, c)
 }
