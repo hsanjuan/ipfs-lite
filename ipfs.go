@@ -188,6 +188,7 @@ func (p *Peer) setupReprovider() error {
 
 func (p *Peer) autoclose() {
 	<-p.ctx.Done()
+	p.host.Close()
 	p.reprovider.Close()
 	p.bserv.Close()
 }
