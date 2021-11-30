@@ -133,11 +133,11 @@ func TestDAG(t *testing.T) {
 		t.Error(err)
 	}
 
-	if ok, err := p1.BlockStore().Has(node.Cid()); ok || err != nil {
+	if ok, err := p1.BlockStore().Has(ctx, node.Cid()); ok || err != nil {
 		t.Error("block should have been deleted")
 	}
 
-	if ok, err := p2.BlockStore().Has(node.Cid()); ok || err != nil {
+	if ok, err := p2.BlockStore().Has(ctx, node.Cid()); ok || err != nil {
 		t.Error("block should have been deleted")
 	}
 }
