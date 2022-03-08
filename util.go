@@ -36,12 +36,14 @@ func NewInMemoryDatastore() datastore.Batching {
 	return dssync.MutexWrap(datastore.NewMapDatastore())
 }
 
+var connManager, _ = connmgr.NewConnManager(100, 600, connmgr.WithGracePeriod(time.Minute))
+
 // Libp2pOptionsExtra provides some useful libp2p options
 // to create a fully featured libp2p host. It can be used with
 // SetupLibp2p.
 var Libp2pOptionsExtra = []libp2p.Option{
 	libp2p.NATPortMap(),
-	libp2p.ConnectionManager(connmgr.NewConnManager(100, 600, time.Minute)),
+	libp2p.ConnectionManager(connManager),
 	libp2p.EnableAutoRelay(),
 	libp2p.EnableNATService(),
 }
