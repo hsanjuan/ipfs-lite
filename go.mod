@@ -22,7 +22,7 @@ require (
 	github.com/ipfs/go-unixfs v0.3.1
 	github.com/libp2p/go-libp2p v0.17.0
 	github.com/libp2p/go-libp2p-connmgr v0.3.1
-	github.com/libp2p/go-libp2p-core v0.13.0
+	github.com/libp2p/go-libp2p-core v0.14.0
 	github.com/libp2p/go-libp2p-kad-dht v0.15.0
 	github.com/libp2p/go-libp2p-record v0.1.3
 	github.com/libp2p/go-tcp-transport v0.4.0
