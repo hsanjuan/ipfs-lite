@@ -34,7 +34,6 @@ func main() {
 		ds,
 		ipfslite.Libp2pOptionsExtra...,
 	)
-
 	if err != nil {
 		panic(err)
 	}

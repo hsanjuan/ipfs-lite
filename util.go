@@ -69,10 +69,9 @@ func SetupLibp2p(
 	ds datastore.Batching,
 	opts ...libp2p.Option,
 ) (host.Host, *dualdht.DHT, error) {
-
 	var ddht *dualdht.DHT
 	var err error
-	var transports = libp2p.DefaultTransports
+	transports := libp2p.DefaultTransports
 
 	if secret != nil {
 		transports = libp2p.ChainOptions(
@@ -116,5 +115,4 @@ func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dualdht.D
 	}
 
 	return dualdht.New(ctx, h, dhtOpts...)
-
 }

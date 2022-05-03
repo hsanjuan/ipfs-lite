@@ -45,9 +45,7 @@ func init() {
 
 var logger = logging.Logger("ipfslite")
 
-var (
-	defaultReprovideInterval = 12 * time.Hour
-)
+var defaultReprovideInterval = 12 * time.Hour
 
 // Config wraps configuration options for the Peer.
 type Config struct {
@@ -92,7 +90,6 @@ func New(
 	dht routing.Routing,
 	cfg *Config,
 ) (*Peer, error) {
-
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -205,7 +202,7 @@ func (p *Peer) Bootstrap(peers []peer.AddrInfo) {
 
 	var wg sync.WaitGroup
 	for _, pinfo := range peers {
-		//h.Peerstore().AddAddrs(pinfo.ID, pinfo.Addrs, peerstore.PermanentAddrTTL)
+		// h.Peerstore().AddAddrs(pinfo.ID, pinfo.Addrs, peerstore.PermanentAddrTTL)
 		wg.Add(1)
 		go func(pinfo peer.AddrInfo) {
 			defer wg.Done()
