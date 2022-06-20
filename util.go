@@ -9,7 +9,6 @@ import (
 	config "github.com/ipfs/go-ipfs-config"
 	ipns "github.com/ipfs/go-ipns"
 	libp2p "github.com/libp2p/go-libp2p"
-	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	host "github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -18,8 +17,9 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	record "github.com/libp2p/go-libp2p-record"
-	tcp "github.com/libp2p/go-tcp-transport"
-	websocket "github.com/libp2p/go-ws-transport"
+	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
+	tcp "github.com/libp2p/go-libp2p/p2p/transport/tcp"
+	websocket "github.com/libp2p/go-libp2p/p2p/transport/websocket"
 	multiaddr "github.com/multiformats/go-multiaddr"
 )
 
