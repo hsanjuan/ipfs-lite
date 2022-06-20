@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
-	github.com/ipfs/go-bitswap v0.6.0
+	github.com/ipfs/go-bitswap v0.7.0
 	github.com/ipfs/go-blockservice v0.3.0
 	github.com/ipfs/go-cid v0.2.0
 	github.com/ipfs/go-datastore v0.5.1
