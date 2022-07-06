@@ -18,7 +18,7 @@ import (
 	"github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	chunker "github.com/ipfs/go-ipfs-chunker"
-	"github.com/ipfs/go-ipfs-exchange-interface"
+	exchange "github.com/ipfs/go-ipfs-exchange-interface"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	provider "github.com/ipfs/go-ipfs-provider"
 	"github.com/ipfs/go-ipfs-provider/queue"
@@ -333,7 +333,12 @@ func (p *Peer) HasBlock(ctx context.Context, c cid.Cid) (bool, error) {
 	return p.BlockStore().Has(ctx, c)
 }
 
-// Exchange returns the underlying exchange implementation
+// Exchange returns the underlying exchange implementation.
 func (p *Peer) Exchange() exchange.Interface {
 	return p.exch
+}
+
+// BlockService returns the underlying blockservice implementation.
+func (p *Peer) BlockService() blockservice.BlockService {
+	return p.bserv
 }
