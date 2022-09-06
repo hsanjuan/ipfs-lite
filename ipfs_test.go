@@ -5,12 +5,11 @@ import (
 	"context"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	cbor "github.com/ipfs/go-ipld-cbor"
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	crypto "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
 	multiaddr "github.com/multiformats/go-multiaddr"
 	multihash "github.com/multiformats/go-multihash"
 )
@@ -187,7 +186,7 @@ func TestFiles(t *testing.T) {
 	}
 	defer rsc.Close()
 
-	content2, err := ioutil.ReadAll(rsc)
+	content2, err := io.ReadAll(rsc)
 	if err != nil {
 		t.Fatal(err)
 	}
