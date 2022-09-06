@@ -6,11 +6,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/ipfs/go-cid"
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	crypto "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -52,7 +52,7 @@ func main() {
 		panic(err)
 	}
 	defer rsc.Close()
-	content, err := ioutil.ReadAll(rsc)
+	content, err := io.ReadAll(rsc)
 	if err != nil {
 		panic(err)
 	}

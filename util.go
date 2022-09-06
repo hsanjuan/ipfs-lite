@@ -6,28 +6,27 @@ import (
 
 	datastore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
-	config "github.com/ipfs/go-ipfs-config"
 	ipns "github.com/ipfs/go-ipns"
 	libp2p "github.com/libp2p/go-libp2p"
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
-	host "github.com/libp2p/go-libp2p-core/host"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	pnet "github.com/libp2p/go-libp2p-core/pnet"
-	routing "github.com/libp2p/go-libp2p-core/routing"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	record "github.com/libp2p/go-libp2p-record"
+	crypto "github.com/libp2p/go-libp2p/core/crypto"
+	host "github.com/libp2p/go-libp2p/core/host"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	pnet "github.com/libp2p/go-libp2p/core/pnet"
+	routing "github.com/libp2p/go-libp2p/core/routing"
 	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	tcp "github.com/libp2p/go-libp2p/p2p/transport/tcp"
 	websocket "github.com/libp2p/go-libp2p/p2p/transport/websocket"
 	multiaddr "github.com/multiformats/go-multiaddr"
 )
 
-// DefaultBootstrapPeers returns the default go-ipfs bootstrap peers (for use
+// DefaultBootstrapPeers returns the default bootstrap peers (for use
 // with NewLibp2pHost.
 func DefaultBootstrapPeers() []peer.AddrInfo {
-	defaults, _ := config.DefaultBootstrapPeers()
-	return defaults
+	peers, _ := peer.AddrInfosFromP2pAddrs(dht.DefaultBootstrapPeers...)
+	return peers
 }
 
 // NewInMemoryDatastore provides a sync datastore that lives in-memory only
