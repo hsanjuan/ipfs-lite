@@ -44,7 +44,7 @@ func main() {
 		panic(err)
 	}
 
-	lite, err := ipfslite.New(ctx, ds, h, dht, nil)
+	lite, err := ipfslite.New(ctx, ds, nil, h, dht, nil)
 	if err != nil {
 		panic(err)
 	}
