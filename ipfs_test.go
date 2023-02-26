@@ -79,12 +79,12 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 			}
 		}
 	}
-	p1, err = New(ctx, ds1, h1, dht1, nil)
+	p1, err = New(ctx, ds1, nil, h1, dht1, nil)
 	if err != nil {
 		closer(t)
 		t.Fatal(err)
 	}
-	p2, err = New(ctx, ds2, h2, dht2, nil)
+	p2, err = New(ctx, ds2, nil, h2, dht2, nil)
 	if err != nil {
 		closer(t)
 		t.Fatal(err)

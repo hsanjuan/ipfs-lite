@@ -55,6 +55,10 @@ type Config struct {
 	Offline bool
 	// ReprovideInterval sets how often to reprovide records to the DHT
 	ReprovideInterval time.Duration
+	// Disables wrapping the blockstore in an ARC cache + Bloomfilter. Use
+	// when the given blockstore or datastore already has caching, or when
+	// caching is not needed.
+	UncachedBlockstore bool
 }
 
 func (cfg *Config) setDefaults() {
@@ -81,13 +85,15 @@ type Peer struct {
 	reprovider      provider.System
 }
 
-// New creates an IPFS-Lite Peer. It uses the given datastore, libp2p Host and
-// Routing (usuall the DHT). The Host and the Routing may be nil if
-// config.Offline is set to true, as they are not used in that case. Peer
-// implements the ipld.DAGService interface.
+// New creates an IPFS-Lite Peer. It uses the given datastore, blockstore,
+// libp2p Host and Routing (usuall the DHT). If the blockstore is nil, the
+// given datastore will be wrapped to create one. The Host and the Routing may
+// be nil if config.Offline is set to true, as they are not used in that
+// case. Peer implements the ipld.DAGService interface.
 func New(
 	ctx context.Context,
-	store datastore.Batching,
+	datastore datastore.Batching,
+	blockstore blockstore.Blockstore,
 	host host.Host,
 	dht routing.Routing,
 	cfg *Config,
@@ -104,10 +110,10 @@ func New(
 		cfg:   cfg,
 		host:  host,
 		dht:   dht,
-		store: store,
+		store: datastore,
 	}
 
-	err := p.setupBlockstore()
+	err := p.setupBlockstore(blockstore)
 	if err != nil {
 		return nil, err
 	}
@@ -131,14 +137,22 @@ func New(
 	return p, nil
 }
 
-func (p *Peer) setupBlockstore() error {
-	bs := blockstore.NewBlockstore(p.store)
-	bs = blockstore.NewIdStore(bs)
-	cachedbs, err := blockstore.CachedBlockstore(p.ctx, bs, blockstore.DefaultCacheOpts())
-	if err != nil {
-		return err
+func (p *Peer) setupBlockstore(bs blockstore.Blockstore) error {
+	var err error
+	if bs == nil {
+		bs = blockstore.NewBlockstore(p.store)
 	}
-	p.bstore = cachedbs
+
+	// Support Identity multihashes.
+	bs = blockstore.NewIdStore(bs)
+
+	if !p.cfg.UncachedBlockstore {
+		bs, err = blockstore.CachedBlockstore(p.ctx, bs, blockstore.DefaultCacheOpts())
+		if err != nil {
+			return err
+		}
+	}
+	p.bstore = bs
 	return nil
 }
 
