@@ -18,7 +18,7 @@ require (
 	github.com/ipfs/go-libipfs v0.6.0
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipfs/go-merkledag v0.10.0
-	github.com/ipfs/go-unixfs v0.4.3
+	github.com/ipfs/go-unixfs v0.4.4
 	github.com/libp2p/go-libp2p v0.26.0
 	github.com/libp2p/go-libp2p-kad-dht v0.21.1
 	github.com/libp2p/go-libp2p-record v0.2.0
