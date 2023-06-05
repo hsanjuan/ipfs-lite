@@ -28,7 +28,6 @@ import (
 	"github.com/ipfs/boxo/provider/simple"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
-	cbor "github.com/ipfs/go-ipld-cbor"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -36,12 +35,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/routing"
 	"github.com/multiformats/go-multihash"
 )
-
-func init() {
-	ipld.Register(cid.DagProtobuf, merkledag.DecodeProtobufBlock)
-	ipld.Register(cid.Raw, merkledag.DecodeRawBlock)
-	ipld.Register(cid.DagCBOR, cbor.DecodeBlock) // need to decode CBOR
-}
 
 var logger = logging.Logger("ipfslite")
 
