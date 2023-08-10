@@ -24,11 +24,8 @@ import (
 	"github.com/ipfs/boxo/ipld/unixfs/importer/trickle"
 	ufsio "github.com/ipfs/boxo/ipld/unixfs/io"
 	provider "github.com/ipfs/boxo/provider"
-	"github.com/ipfs/boxo/provider/queue"
-	"github.com/ipfs/boxo/provider/simple"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
-	cbor "github.com/ipfs/go-ipld-cbor"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -36,12 +33,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/routing"
 	"github.com/multiformats/go-multihash"
 )
-
-func init() {
-	ipld.Register(cid.DagProtobuf, merkledag.DecodeProtobufBlock)
-	ipld.Register(cid.Raw, merkledag.DecodeRawBlock)
-	ipld.Register(cid.DagCBOR, cbor.DecodeBlock) // need to decode CBOR
-}
 
 var logger = logging.Logger("ipfslite")
 
@@ -176,30 +167,20 @@ func (p *Peer) setupDAGService() error {
 
 func (p *Peer) setupReprovider() error {
 	if p.cfg.Offline || p.cfg.ReprovideInterval < 0 {
-		p.reprovider = provider.NewOfflineProvider()
+		p.reprovider = provider.NewNoopProvider()
 		return nil
 	}
 
-	queue, err := queue.NewQueue(p.ctx, "repro", p.store)
+	prov, err := provider.New(p.store,
+		provider.DatastorePrefix(datastore.NewKey("repro")),
+		provider.Online(p.dht),
+		provider.ReproviderInterval(p.cfg.ReprovideInterval),
+		provider.KeyProvider(provider.NewBlockstoreProvider(p.bstore)))
 	if err != nil {
 		return err
 	}
+	p.reprovider = prov
 
-	prov := simple.NewProvider(
-		p.ctx,
-		queue,
-		p.dht,
-	)
-
-	reprov := simple.NewReprovider(
-		p.ctx,
-		p.cfg.ReprovideInterval,
-		p.dht,
-		simple.NewBlockstoreProvider(p.bstore),
-	)
-
-	p.reprovider = provider.NewSystem(prov, reprov)
-	p.reprovider.Run()
 	return nil
 }
 
