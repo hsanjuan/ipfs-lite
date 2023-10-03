@@ -3,7 +3,7 @@ module github.com/hsanjuan/ipfs-lite
 go 1.20
 
 require (
-	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
+	github.com/awalterschulze/gographviz v2.0.3+incompatible
 	github.com/ipfs/boxo v0.13.1
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-datastore v0.6.0
