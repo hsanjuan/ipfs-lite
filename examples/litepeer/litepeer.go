@@ -6,13 +6,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
-
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
+	"io"
 )
+
+var contentHash = "QmWATWQ7fVPP2EFGu71UkfnqhYXDYH566qy47CnJDgvs8u"
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -46,16 +47,25 @@ func main() {
 
 	lite.Bootstrap(ipfslite.DefaultBootstrapPeers())
 
-	c, _ := cid.Decode("QmWATWQ7fVPP2EFGu71UkfnqhYXDYH566qy47CnJDgvs8u")
+	c, _ := cid.Decode(contentHash)
 	rsc, err := lite.GetFile(ctx, c)
 	if err != nil {
 		panic(err)
 	}
 	defer rsc.Close()
 	content, err := io.ReadAll(rsc)
+
+	ipnsLink, err := lite.PublishIPNS(ctx, priv, fmt.Sprintf("/ipfs/%s", contentHash))
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(string(content))
+	fmt.Printf("IPNS link: https://%s\n", ipnsLink)
+	fmt.Println("Content:", string(content))
+
+	select {
+	case <-ctx.Done():
+		fmt.Println("Context done")
+		return
+	}
 }

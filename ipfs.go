@@ -6,10 +6,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ipfs/boxo/ipns"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"io"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ipfs/boxo/namesys"
+	"github.com/ipfs/boxo/path"
 
 	"github.com/ipfs/boxo/bitswap"
 	"github.com/ipfs/boxo/bitswap/network/bsnet"
@@ -315,6 +320,24 @@ func (p *Peer) GetFile(ctx context.Context, c cid.Cid) (ufsio.ReadSeekCloser, er
 		return nil, err
 	}
 	return ufsio.NewDagReader(ctx, n, p)
+}
+
+func (p *Peer) PublishIPNS(ctx context.Context, privK crypto.PrivKey, ipfsPath string) (string, error) {
+	// Define the path this record will point to.
+	path, err := path.NewPath(ipfsPath)
+	if err != nil {
+		return "", err
+	}
+
+	ns := namesys.NewIPNSPublisher(p.dht, p.store)
+
+	if err := ns.Publish(ctx, privK, path); err != nil {
+		return "", err
+	}
+
+	ipnsLink := ipns.NameFromPeer(p.host.ID())
+
+	return fmt.Sprintf("/ipns/%s", ipnsLink.Cid().String()), nil
 }
 
 // BlockStore offers access to the blockstore underlying the Peer's DAGService.
