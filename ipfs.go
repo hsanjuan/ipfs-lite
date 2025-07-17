@@ -269,6 +269,7 @@ type AddParams struct {
 	Shard     bool
 	NoCopy    bool
 	HashFun   string
+	MaxLinks  int
 }
 
 // AddFile chunks and adds content to the DAGService from a reader. The content
@@ -280,6 +281,10 @@ func (p *Peer) AddFile(ctx context.Context, r io.Reader, params *AddParams) (ipl
 	}
 	if params.HashFun == "" {
 		params.HashFun = "sha2-256"
+	}
+
+	if params.MaxLinks == 0 {
+		params.MaxLinks = helpers.DefaultLinksPerBlock
 	}
 
 	prefix, err := merkledag.PrefixForCidVersion(1)
@@ -297,7 +302,7 @@ func (p *Peer) AddFile(ctx context.Context, r io.Reader, params *AddParams) (ipl
 	dbp := helpers.DagBuilderParams{
 		Dagserv:    p,
 		RawLeaves:  params.RawLeaves,
-		Maxlinks:   helpers.DefaultLinksPerBlock,
+		Maxlinks:   params.MaxLinks,
 		NoCopy:     params.NoCopy,
 		CidBuilder: &prefix,
 	}
