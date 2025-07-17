@@ -115,12 +115,12 @@ func New(
 	}
 	err = p.setupDAGService()
 	if err != nil {
-		p.bserv.Close()
+		_ = p.bserv.Close()
 		return nil, err
 	}
 	err = p.setupReprovider()
 	if err != nil {
-		p.bserv.Close()
+		_ = p.bserv.Close()
 		return nil, err
 	}
 
@@ -202,8 +202,8 @@ func (p *Peer) setupReprovider() error {
 
 func (p *Peer) autoclose() {
 	<-p.ctx.Done()
-	p.reprovider.Close()
-	p.bserv.Close()
+	_ = p.reprovider.Close()
+	_ = p.bserv.Close()
 }
 
 // Bootstrap is an optional helper to connect to the given peers and bootstrap

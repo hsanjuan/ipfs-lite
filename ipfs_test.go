@@ -184,6 +184,7 @@ func TestFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	//nolint:errcheck
 	defer rsc.Close()
 
 	content2, err := io.ReadAll(rsc)
