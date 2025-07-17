@@ -132,7 +132,9 @@ func New(
 func (p *Peer) setupBlockstore(bs blockstore.Blockstore) error {
 	var err error
 	if bs == nil {
-		bs = blockstore.NewBlockstore(p.store)
+		bs = blockstore.NewBlockstore(p.store,
+			blockstore.WriteThrough(true),
+		)
 	}
 
 	// Support Identity multihashes.
@@ -189,7 +191,7 @@ func (p *Peer) setupReprovider() error {
 		provider.DatastorePrefix(datastore.NewKey("repro")),
 		provider.Online(p.dht),
 		provider.ReproviderInterval(p.cfg.ReprovideInterval),
-		provider.KeyProvider(provider.NewBlockstoreProvider(p.bstore)))
+		provider.KeyProvider(p.bstore.AllKeysChan))
 	if err != nil {
 		return err
 	}
