@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ipfs/boxo/bitswap"
+	"github.com/ipfs/boxo/bitswap/client"
 	"github.com/ipfs/boxo/bitswap/network/bsnet"
 	"github.com/ipfs/boxo/blockservice"
 	blockstore "github.com/ipfs/boxo/blockstore"
@@ -154,7 +155,20 @@ func (p *Peer) setupBlockService() error {
 	}
 
 	bswapnet := bsnet.NewFromIpfsHost(p.host)
-	bswap := bitswap.New(p.ctx, bswapnet, nil, p.bstore)
+	bswap := bitswap.New(p.ctx, bswapnet, nil, p.bstore,
+		bitswap.ProviderSearchDelay(1000*time.Millisecond), // See https://github.com/ipfs/go-ipfs/issues/8807 for rationale
+		bitswap.EngineBlockstoreWorkerCount(128),
+		bitswap.TaskWorkerCount(24),
+		bitswap.EngineTaskWorkerCount(24),
+		bitswap.MaxOutstandingBytesPerPeer(1<<20),
+		bitswap.WithWantHaveReplaceSize(1024),
+		bitswap.WithClientOption(client.BroadcastControlEnable(true)),
+		bitswap.WithClientOption(client.BroadcastControlMaxPeers(-1)),
+		bitswap.WithClientOption(client.BroadcastControlLocalPeers(false)),
+		bitswap.WithClientOption(client.BroadcastControlPeeredPeers(false)),
+		bitswap.WithClientOption(client.BroadcastControlMaxRandomPeers(0)),
+		bitswap.WithClientOption(client.BroadcastControlSendToPendingPeers(false)),
+	)
 	p.bserv = blockservice.New(p.bstore, bswap)
 	p.exch = bswap
 	return nil
