@@ -51,6 +51,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	//nolint:errcheck
 	defer rsc.Close()
 	content, err := io.ReadAll(rsc)
 	if err != nil {

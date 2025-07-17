@@ -21,7 +21,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	log.SetLogLevel("*", "warn")
+	_ = log.SetLogLevel("*", "warn")
 
 	ds := ipfslite.NewInMemoryDatastore()
 	priv, _, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
