@@ -38,7 +38,8 @@ import (
 var logger = logging.Logger("ipfslite")
 
 var (
-	defaultReprovideInterval = 12 * time.Hour
+	defaultReprovideInterval              = 12 * time.Hour
+	defaultBitswapBroadcastMaxRandomPeers = 64
 )
 
 // Config wraps configuration options for the Peer.
@@ -51,11 +52,20 @@ type Config struct {
 	// when the given blockstore or datastore already has caching, or when
 	// caching is not needed.
 	UncachedBlockstore bool
+	// Controls the maximum number of random peers that this peer will
+	// broadcast its list of wanted blocks. Defaults to 64. It is possible
+	// to disable broadcasts to random peers by setting it to -1.
+	BitswapBroadcastMaxRandomPeers int
 }
 
 func (cfg *Config) setDefaults() {
 	if cfg.ReprovideInterval == 0 {
 		cfg.ReprovideInterval = defaultReprovideInterval
+	}
+	if bbmrp := cfg.BitswapBroadcastMaxRandomPeers; bbmrp == 0 {
+		cfg.BitswapBroadcastMaxRandomPeers = defaultBitswapBroadcastMaxRandomPeers
+	} else if bbmrp < 0 {
+		cfg.BitswapBroadcastMaxRandomPeers = 0
 	}
 }
 
@@ -168,7 +178,7 @@ func (p *Peer) setupBlockService() error {
 		bitswap.WithClientOption(client.BroadcastControlMaxPeers(-1)),
 		bitswap.WithClientOption(client.BroadcastControlLocalPeers(false)),
 		bitswap.WithClientOption(client.BroadcastControlPeeredPeers(false)),
-		bitswap.WithClientOption(client.BroadcastControlMaxRandomPeers(0)),
+		bitswap.WithClientOption(client.BroadcastControlMaxRandomPeers(p.cfg.BitswapBroadcastMaxRandomPeers)),
 		bitswap.WithClientOption(client.BroadcastControlSendToPendingPeers(false)),
 	)
 	p.bserv = blockservice.New(p.bstore, bswap)
