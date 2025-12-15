@@ -174,7 +174,7 @@ func (p *Peer) setupBlockService() error {
 		bitswap.EngineTaskWorkerCount(24),
 		bitswap.MaxOutstandingBytesPerPeer(1<<20),
 		bitswap.WithWantHaveReplaceSize(1024),
-		bitswap.WithClientOption(client.BroadcastControlEnable(true)),
+		bitswap.WithClientOption(client.BroadcastControlEnable(false)),
 		bitswap.WithClientOption(client.BroadcastControlMaxPeers(-1)),
 		bitswap.WithClientOption(client.BroadcastControlLocalPeers(false)),
 		bitswap.WithClientOption(client.BroadcastControlPeeredPeers(false)),
