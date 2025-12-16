@@ -179,7 +179,7 @@ func (p *Peer) setupBlockService() error {
 		bitswap.WithClientOption(client.BroadcastControlLocalPeers(false)),
 		bitswap.WithClientOption(client.BroadcastControlPeeredPeers(false)),
 		bitswap.WithClientOption(client.BroadcastControlMaxRandomPeers(p.cfg.BitswapBroadcastMaxRandomPeers)),
-		bitswap.WithClientOption(client.BroadcastControlSendToPendingPeers(false)),
+		bitswap.WithClientOption(client.BroadcastControlSendToPendingPeers(true)),
 	)
 	p.bserv = blockservice.New(p.bstore, bswap)
 	p.exch = bswap
