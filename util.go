@@ -1,7 +1,6 @@
 package ipfslite
 
 import (
-	"context"
 	"time"
 
 	ipns "github.com/ipfs/boxo/ipns"
@@ -43,7 +42,7 @@ var connMgr, _ = connmgr.NewConnManager(100, 600, connmgr.WithGracePeriod(time.M
 var Libp2pOptionsExtra = []libp2p.Option{
 	libp2p.NATPortMap(),
 	libp2p.ConnectionManager(connMgr),
-	//libp2p.EnableAutoRelay(),
+	// libp2p.EnableAutoRelay(),
 	libp2p.EnableNATService(),
 }
 
@@ -61,17 +60,15 @@ var Libp2pOptionsExtra = []libp2p.Option{
 //
 // The secret should be a 32-byte pre-shared-key byte slice.
 func SetupLibp2p(
-	ctx context.Context,
 	hostKey crypto.PrivKey,
 	secret pnet.PSK,
 	listenAddrs []multiaddr.Multiaddr,
 	ds datastore.Batching,
 	opts ...libp2p.Option,
 ) (host.Host, *dualdht.DHT, error) {
-
 	var ddht *dualdht.DHT
 	var err error
-	var transports = libp2p.DefaultTransports
+	transports := libp2p.DefaultTransports
 
 	if secret != nil {
 		transports = libp2p.ChainOptions(
@@ -87,7 +84,7 @@ func SetupLibp2p(
 		libp2p.PrivateNetwork(secret),
 		transports,
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
-			ddht, err = newDHT(ctx, h, ds)
+			ddht, err = newDHT(h, ds)
 			return ddht, err
 		}),
 	}
@@ -103,7 +100,7 @@ func SetupLibp2p(
 	return h, ddht, nil
 }
 
-func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dualdht.DHT, error) {
+func newDHT(h host.Host, ds datastore.Batching) (*dualdht.DHT, error) {
 	dhtOpts := []dualdht.Option{
 		dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
 		dualdht.DHTOption(dht.NamespacedValidator("ipns", ipns.Validator{KeyBook: h.Peerstore()})),
@@ -114,6 +111,5 @@ func newDHT(ctx context.Context, h host.Host, ds datastore.Batching) (*dualdht.D
 		dhtOpts = append(dhtOpts, dualdht.DHTOption(dht.Datastore(ds)))
 	}
 
-	return dualdht.New(ctx, h, dhtOpts...)
-
+	return dualdht.New(h, dhtOpts...)
 }
