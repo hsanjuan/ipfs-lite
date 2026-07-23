@@ -37,7 +37,6 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 
 	listen, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/0")
 	h1, dht1, err := SetupLibp2p(
-		ctx,
 		priv1,
 		psk,
 		[]multiaddr.Multiaddr{listen},
@@ -54,7 +53,6 @@ func setupPeers(t *testing.T) (p1, p2 *Peer, closer func(t *testing.T)) {
 	}
 
 	h2, dht2, err := SetupLibp2p(
-		ctx,
 		priv2,
 		psk,
 		[]multiaddr.Multiaddr{listen},

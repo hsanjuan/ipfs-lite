@@ -13,9 +13,7 @@ import (
 	"github.com/multiformats/go-multiaddr"
 )
 
-var (
-	testCID = "QmS4ustL54uo8FzR9455qaxZwuMiUhyvMcX9Ba8nUH4uVv"
-)
+var testCID = "QmS4ustL54uo8FzR9455qaxZwuMiUhyvMcX9Ba8nUH4uVv"
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -32,14 +30,12 @@ func main() {
 	listen, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/4005")
 
 	h, dht, err := ipfslite.SetupLibp2p(
-		ctx,
 		priv,
 		nil,
 		[]multiaddr.Multiaddr{listen},
 		ds,
 		ipfslite.Libp2pOptionsExtra...,
 	)
-
 	if err != nil {
 		panic(err)
 	}
